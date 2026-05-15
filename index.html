@@ -483,7 +483,7 @@
     { key: 'signal', label: 'Signal', desc: 'Radio signal strength. Lower values make the audio weaker, dirtier, and more buried in static.' },
     { key: 'noise', label: 'Noise', desc: 'Constant radio hiss. At zero, the noise layer is almost silent.' },
     { key: 'bandwidth', label: 'Bandwidth', desc: 'Frequency range. Lower values create a narrow AM/telephone sound, higher values sound cleaner.' },
-    { key: 'tuningDrift', label: 'Tuning Drift', desc: 'Unstable tuning. The station slowly slips away from the frequency and comes back.' },
+    { key: 'tuningDrift', label: 'Tuning Drift', desc: 'Smooth tuning drift, like someone slowly turning the radio knob. The signal fades while static and interference rise.' },
     { key: 'dropouts', label: 'Dropouts', desc: 'Short signal losses. At zero, there should be no dropouts.' },
     { key: 'interference', label: 'Interference', desc: 'Whistles and neighboring frequencies leaking into the broadcast.' },
     { key: 'speakerAge', label: 'Speaker Age', desc: 'Old speaker tone. Makes the sound smaller, boxier, and more worn out.' },
@@ -496,8 +496,8 @@
   ];
 
   const presets = {
-    'Clean Old Radio': { signal: 92, noise: 4, bandwidth: 76, tuningDrift: 3, dropouts: 0, interference: 2, speakerAge: 24, distortion: 4, roomDistance: 0, haunt: 0, mumbleVoice: 0, buzz: 0, crackle: 2 },
-    'Kitchen Broadcast': { signal: 84, noise: 10, bandwidth: 58, tuningDrift: 8, dropouts: 2, interference: 6, speakerAge: 42, distortion: 10, roomDistance: 10, haunt: 0, mumbleVoice: 0, buzz: 5, crackle: 8 },
+    'Clean Old Radio': { signal: 92, noise: 4, bandwidth: 76, tuningDrift: 8, dropouts: 0, interference: 2, speakerAge: 24, distortion: 4, roomDistance: 0, haunt: 0, mumbleVoice: 0, buzz: 0, crackle: 2 },
+    'Kitchen Broadcast': { signal: 84, noise: 10, bandwidth: 58, tuningDrift: 18, dropouts: 2, interference: 6, speakerAge: 42, distortion: 10, roomDistance: 10, haunt: 0, mumbleVoice: 0, buzz: 5, crackle: 8 },
     'Distant AM Station': { signal: 56, noise: 34, bandwidth: 34, tuningDrift: 30, dropouts: 18, interference: 30, speakerAge: 54, distortion: 16, roomDistance: 6, haunt: 0, mumbleVoice: 10, buzz: 12, crackle: 22 },
     'War Newsreel': { signal: 70, noise: 24, bandwidth: 28, tuningDrift: 12, dropouts: 8, interference: 18, speakerAge: 70, distortion: 34, roomDistance: 4, haunt: 0, mumbleVoice: 18, buzz: 20, crackle: 38 },
     'Numbers Station': { signal: 62, noise: 28, bandwidth: 36, tuningDrift: 34, dropouts: 10, interference: 58, speakerAge: 34, distortion: 14, roomDistance: 0, haunt: 22, mumbleVoice: 55, buzz: 22, crackle: 15 },
@@ -742,6 +742,8 @@
     const dryGain = audioCtx.createGain();
     const mix = audioCtx.createGain();
     const master = audioCtx.createGain();
+    const fadeInGain = audioCtx.createGain();
+    fadeInGain.gain.value = 0.0001;
 
     const noiseSource = audioCtx.createBufferSource();
     noiseSource.buffer = makeNoiseBuffer(2);
@@ -805,23 +807,30 @@
     mumblePresence.connect(mumbleGain);
     mumbleGain.connect(mix);
     mix.connect(master);
-    master.connect(analyser);
+    master.connect(fadeInGain);
+    fadeInGain.connect(analyser);
     analyser.connect(audioCtx.destination);
 
     live = {
-      inputGain, dropoutGain, hp, lp, mid, shaper, cabinet, delay, delayGain, dryGain, master,
+      inputGain, dropoutGain, hp, lp, mid, shaper, cabinet, delay, delayGain, dryGain, master, fadeInGain,
       noiseSource, noiseFilter, noiseGain, crackleSource, crackleGain, buzzOsc, buzzGain,
       interOsc, interGain, hauntDelay, hauntGain, mumbleSource, mumbleFilter, mumblePresence, mumbleGain, mix
     };
 
     updateLiveAudio();
 
-    sourceNode.start();
-    noiseSource.start();
-    crackleSource.start();
-    buzzOsc.start();
-    interOsc.start();
-    mumbleSource.start();
+    const startTime = audioCtx.currentTime + 0.02;
+    fadeInGain.gain.cancelScheduledValues(startTime);
+    fadeInGain.gain.setValueAtTime(0.0001, startTime);
+    fadeInGain.gain.linearRampToValueAtTime(1.0, startTime + 0.22);
+
+    const sourceOffset = originalBuffer.duration > 0.03 ? 0.005 : 0;
+    sourceNode.start(startTime, sourceOffset);
+    noiseSource.start(startTime);
+    crackleSource.start(startTime);
+    buzzOsc.start(startTime);
+    interOsc.start(startTime);
+    mumbleSource.start(startTime);
 
     isPlaying = true;
     if (playBtn) playBtn.textContent = 'Restart';
@@ -920,15 +929,72 @@
     clearInterval(driftTimer);
     driftTimer = setInterval(() => {
       if (!live || !audioCtx || !isPlaying) return;
+
       const amount = params.tuningDrift / 100;
       const t = now();
+      const signal = params.signal / 100;
+      const noise = params.noise / 100;
+      const interference = params.interference / 100;
       const bandwidth = params.bandwidth / 100;
       const age = params.speakerAge / 100;
+
+      const baseSignalGain = lerp(0.05, 1.08, signal);
+      const baseNoiseGain = noise * noise * lerp(0.0, 0.32, 1 - signal + 0.35);
+      const baseInterGain = interference * interference * 0.13;
       const highBase = Math.max(700, lerp(1300, 12500, bandwidth) - age * 1800);
-      const wobble = 1 + (Math.random() * 2 - 1) * amount * 0.35;
-      live.lp.frequency.setTargetAtTime(clamp(highBase * wobble, 500, 14000), t, 0.18);
-      live.interOsc.frequency.setTargetAtTime(lerp(220, 2100, Math.random()) * amount + 220, t, 0.12);
-    }, 250);
+      const lowBase = lerp(70, 850, (1 - bandwidth) * 0.7 + age * 0.3);
+
+      if (amount <= 0) {
+        live.inputGain.gain.setTargetAtTime(baseSignalGain, t, 0.12);
+        live.noiseGain.gain.setTargetAtTime(baseNoiseGain, t, 0.12);
+        live.interGain.gain.setTargetAtTime(baseInterGain, t, 0.12);
+        live.lp.frequency.setTargetAtTime(highBase, t, 0.18);
+        live.hp.frequency.setTargetAtTime(lowBase, t, 0.18);
+        return;
+      }
+
+      const chance = 0.10 + amount * 0.42;
+      if (Math.random() > chance) return;
+
+      const driftHit = clamp(0.14 + Math.random() * 0.76 * amount, 0, 1);
+      const direction = Math.random() < 0.5 ? -1 : 1;
+      const knobSweep = 1 + direction * driftHit * 0.62;
+      const signalDip = clamp(1 - driftHit * 0.62, 0.22, 1);
+      const noiseBoost = 1 + driftHit * 4.2;
+      const interBoost = 1 + driftHit * 5.4;
+      const fadeIn = 0.22 + driftHit * 0.34;
+      const hold = 0.18 + driftHit * 0.42;
+      const fadeOut = 0.35 + driftHit * 0.55;
+
+      live.inputGain.gain.cancelScheduledValues(t);
+      live.noiseGain.gain.cancelScheduledValues(t);
+      live.interGain.gain.cancelScheduledValues(t);
+      live.lp.frequency.cancelScheduledValues(t);
+      live.hp.frequency.cancelScheduledValues(t);
+      live.interOsc.frequency.cancelScheduledValues(t);
+
+      live.inputGain.gain.setValueAtTime(live.inputGain.gain.value, t);
+      live.noiseGain.gain.setValueAtTime(live.noiseGain.gain.value, t);
+      live.interGain.gain.setValueAtTime(live.interGain.gain.value, t);
+      live.lp.frequency.setValueAtTime(live.lp.frequency.value, t);
+      live.hp.frequency.setValueAtTime(live.hp.frequency.value, t);
+      live.interOsc.frequency.setValueAtTime(live.interOsc.frequency.value, t);
+
+      live.inputGain.gain.linearRampToValueAtTime(baseSignalGain * signalDip, t + fadeIn);
+      live.noiseGain.gain.linearRampToValueAtTime(baseNoiseGain * noiseBoost + driftHit * 0.025, t + fadeIn);
+      live.interGain.gain.linearRampToValueAtTime(baseInterGain * interBoost + driftHit * interference * 0.055, t + fadeIn);
+
+      live.lp.frequency.linearRampToValueAtTime(clamp(highBase * knobSweep, 420, 14500), t + fadeIn);
+      live.hp.frequency.linearRampToValueAtTime(clamp(lowBase * (1 + driftHit * 1.25), 40, 1500), t + fadeIn);
+      live.interOsc.frequency.linearRampToValueAtTime(lerp(320, 3000, Math.random()) * (0.55 + amount), t + fadeIn);
+
+      const backStart = t + fadeIn + hold;
+      live.inputGain.gain.linearRampToValueAtTime(baseSignalGain, backStart + fadeOut);
+      live.noiseGain.gain.linearRampToValueAtTime(baseNoiseGain, backStart + fadeOut);
+      live.interGain.gain.linearRampToValueAtTime(baseInterGain, backStart + fadeOut);
+      live.lp.frequency.linearRampToValueAtTime(highBase, backStart + fadeOut);
+      live.hp.frequency.linearRampToValueAtTime(lowBase, backStart + fadeOut);
+    }, 520);
   }
 
   function stopPlayback(showStatus) {
@@ -997,6 +1063,9 @@
     let mf2 = 620;
     let mf3 = 1180;
     let dropoutEnv = 1;
+    let driftEnv = 0;
+    let driftTarget = 0;
+    let nextDriftSample = 0;
     let crackleHold = 0;
     let crackleAmp = 0;
 
@@ -1015,8 +1084,14 @@
       if (dropouts > 0 && Math.random() < dropouts * 0.00045) dropoutEnv = Math.random() * 0.1;
       dropoutEnv += (1 - dropoutEnv) * lerp(0.02, 0.002, dropouts);
 
-      const driftLfo = Math.sin(t * lerp(0.15, 1.35, drift)) * drift + Math.sin(t * 0.07) * drift * 0.7;
-      const signalWobble = clamp(1 - Math.abs(driftLfo) * 0.36, 0.2, 1.2);
+      if (drift > 0 && i >= nextDriftSample) {
+        driftTarget = Math.random() < (0.10 + drift * 0.42) ? (0.25 + Math.random() * 0.75) * drift : 0;
+        nextDriftSample = i + Math.floor(sampleRate * (0.09 + Math.random() * 0.34));
+      }
+      driftEnv += (driftTarget - driftEnv) * (driftTarget > driftEnv ? 0.0018 : 0.0012);
+      const driftLfo = (Math.sin(t * lerp(0.28, 1.45, drift)) * 0.62 + Math.sin(t * 0.11) * 0.38) * driftEnv;
+      const driftLoss = clamp(Math.abs(driftLfo) + driftEnv * 0.55, 0, 1);
+      const signalWobble = clamp(1 - driftLoss * 0.62, 0.22, 1.2);
 
       hp = hpA * (hp + x - hpLastX);
       hpLastX = x;
@@ -1025,9 +1100,9 @@
       let y = lp * lerp(0.95, 0.58, age) + mid * lerp(0.05, 0.68, age);
 
       y *= lerp(0.05, 1.08, signal) * signalWobble * dropoutEnv;
-      y += (Math.random() * 2 - 1) * noise * noise * lerp(0.0, 0.32, 1 - signal + 0.35);
+      y += (Math.random() * 2 - 1) * (noise * noise * lerp(0.0, 0.32, 1 - signal + 0.35) * (1 + driftLoss * 4.2) + driftLoss * 0.016);
       y += Math.sin(2 * Math.PI * 50 * t) * buzz * buzz * 0.16;
-      y += Math.sin(2 * Math.PI * (lerp(260, 1900, interference) + driftLfo * 80) * t) * interference * interference * 0.13;
+      y += Math.sin(2 * Math.PI * (lerp(260, 2200, interference) + driftLfo * 320) * t) * (interference * interference * 0.13 * (1 + driftLoss * 5.4) + driftLoss * interference * 0.04);
 
       if (crackleAmount > 0 && crackleHold <= 0 && Math.random() < crackleAmount * 0.0025) {
         crackleHold = Math.floor(3 + Math.random() * 55);
