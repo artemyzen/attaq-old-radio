@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATTAQ Old Radio</title>
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #1b1b1b;
+      --panel2: #242424;
+      --text: #e9e2d0;
+      --muted: #9d9687;
+      --accent: #d6a94a;
+      --accent2: #92b06a;
+      --danger: #d06a4d;
+      --line: #3c3c3c;
+      --dark: #070707;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 10px;
+      background:
+        radial-gradient(ellipse at 20% 12%, rgba(255, 213, 145, 0.13), transparent 28%),
+        radial-gradient(ellipse at 80% 88%, rgba(0, 0, 0, 0.35), transparent 38%),
+        repeating-linear-gradient(90deg,
+          rgba(255,255,255,0.035) 0px,
+          rgba(255,255,255,0.018) 12px,
+          rgba(0,0,0,0.045) 26px,
+          rgba(255,255,255,0.022) 41px,
+          rgba(0,0,0,0.055) 62px),
+        linear-gradient(180deg, #57391f 0%, #6e4726 18%, #7a4f2d 36%, #5e3d24 55%, #764b2b 73%, #4b2f1d 100%);
+      background-blend-mode: soft-light, multiply, overlay, normal;
+    }
+
+    .app {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 10px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(0,0,0,0.08)), var(--panel);
+      border: 2px solid var(--line);
+      box-shadow: 5px 5px 0 rgba(0,0,0,.32);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    header.panel {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .brand {
+      background: #0c0c0c;
+      border: 2px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 78px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.2vw, 46px);
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .brand p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .radio-card {
+      background: var(--panel2);
+      border: 2px solid var(--line);
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr 70px;
+      gap: 8px;
+      min-height: 78px;
+    }
+
+    .dial {
+      position: relative;
+      background: #080808;
+      border: 2px solid #383838;
+      overflow: hidden;
+      min-height: 58px;
+    }
+
+    .dial-scale {
+      position: absolute;
+      inset: 8px;
+      color: rgba(233,226,208,.62);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .dial-lines {
+      position: absolute;
+      inset: 28px 10px 14px;
+      background: repeating-linear-gradient(90deg, rgba(214,169,74,.5) 0 2px, transparent 2px 16px);
+    }
+
+    .needle {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      left: 54%;
+      background: var(--danger);
+      box-shadow: 0 0 10px rgba(208,106,77,.75);
+      transform: translateX(-50%);
+    }
+
+    .speaker {
+      background: repeating-linear-gradient(0deg, #111 0 5px, #252525 5px 9px), #111;
+      border: 2px solid #383838;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .sidebar, .main {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .upload-dropzone {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 82px;
+      padding: 12px 14px;
+      background: #0b0b0b;
+      border: 1px dashed #4a4a4a;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.dragover {
+      border-color: var(--accent);
+      background: #0f0f0f;
+    }
+
+    .upload-dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .upload-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .filename {
+      margin-top: 8px;
+      color: var(--accent2);
+      font-size: 11px;
+      word-break: break-word;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    button {
+      width: 100%;
+      min-height: 30px;
+      border: 2px solid #464646;
+      background: #111;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 800;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button:disabled { opacity: .35; cursor: not-allowed; }
+
+    .primary {
+      background: var(--accent);
+      color: #111;
+      border-color: #f2d58b;
+    }
+
+    .primary:hover { color: #111; filter: brightness(1.08); }
+    .danger { color: #ffb19e; border-color: rgba(208,106,77,.7); }
+    .loop-on { color: var(--accent2); border-color: var(--accent2); }
+
+    .preset-strip {
+      grid-column: 1 / -1;
+      padding: 6px 8px;
+    }
+
+    .preset-inline {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .preset-btn {
+      text-align: center;
+      padding: 3px 7px;
+      background: #121212;
+      min-height: 22px;
+      font-size: 10px;
+      line-height: 1;
+      white-space: nowrap;
+      flex: 1 1 auto;
+    }
+
+    .preset-btn.active {
+      background: #2b2415;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    canvas {
+      width: 100%;
+      height: 72px;
+      background: #070707;
+      border: 2px solid var(--line);
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    .meters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .meter {
+      background: #101010;
+      border: 2px solid #333;
+      padding: 6px;
+    }
+
+    .meter-name {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      font-weight: 800;
+    }
+
+    .bar {
+      height: 10px;
+      width: 100%;
+      background: #080808;
+      border: 1px solid #444;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width .08s linear;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .control {
+      background: #121212;
+      border: 2px solid #333;
+      padding: 8px;
+    }
+
+    .labelrow {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .value {
+      color: var(--accent);
+      min-width: 32px;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .desc {
+      min-height: 24px;
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .status {
+      padding: 8px;
+      background: #111;
+      border: 2px solid #333;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .03em;
+    }
+
+    .footer a { color: var(--accent); text-decoration: none; font-weight: 800; }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 1100px) {
+      .control-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .preset-inline { flex-wrap: wrap; overflow: visible; }
+    }
+
+    @media (max-width: 900px) {
+      body { padding: 8px; }
+      .app { grid-template-columns: 1fr; }
+      header.panel { grid-template-columns: 1fr; }
+      .control-grid { grid-template-columns: 1fr; }
+      .preset-inline { flex-wrap: wrap; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="panel">
+      <div class="brand">
+        <h1>ATTAQ OLD RADIO</h1>
+        <p>Old radio, bad antenna, broken broadcast emulator</p>
+      </div>
+      <div class="radio-card" aria-hidden="true">
+        <div class="dial">
+          <div class="dial-scale"><span>530</span><span>700</span><span>900</span><span>1100</span><span>1400</span><span>1600</span></div>
+          <div class="dial-lines"></div>
+          <div class="needle" id="needle"></div>
+        </div>
+        <div class="speaker"></div>
+      </div>
+    </header>
+
+    <section class="panel preset-strip">
+      <div id="presetGrid" class="preset-inline"></div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Audio File</h2>
+        <label class="upload-dropzone" for="fileInput" id="dropzone">
+          <input id="fileInput" type="file" accept="audio/*" />
+          <div class="upload-title">Drop audio here or click</div>
+          <div class="upload-subtitle">mp3, wav, ogg, m4a – browser support may vary</div>
+        </label>
+        <div id="fileName" class="filename">No file loaded</div>
+        <div class="buttons">
+          <button id="playBtn" class="primary" disabled>Play</button>
+          <button id="stopBtn" disabled>Stop</button>
+          <button id="loopBtn" disabled>Loop: Off</button>
+          <button id="exportBtn" disabled>Export WAV</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel footer">
+        By Artemy Zen<br>
+        <a href="https://t.me/archichtotodelajet" target="_blank" rel="noreferrer">Telegram</a>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="panel">
+        <h2>Signal Monitor</h2>
+        <canvas id="scope" width="1000" height="110"></canvas>
+        <div class="meters">
+          <div class="meter"><div class="meter-name">Signal</div><div class="bar"><div id="mSignal" class="fill"></div></div></div>
+          <div class="meter"><div class="meter-name">Noise</div><div class="bar"><div id="mNoise" class="fill"></div></div></div>
+          <div class="meter"><div class="meter-name">Damage</div><div class="bar"><div id="mDamage" class="fill"></div></div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Main Controls</h2>
+        <div class="control-grid" id="controls"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Status</h2>
+        <div id="status" class="status">Load an audio file, choose a preset, then press Play.</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+(() => {
+  'use strict';
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+  const params = {
+    signal: 92,
+    noise: 4,
+    bandwidth: 76,
+    tuningDrift: 3,
+    dropouts: 0,
+    interference: 2,
+    speakerAge: 24,
+    distortion: 4,
+    roomDistance: 0,
+    haunt: 0,
+    mumbleVoice: 0,
+    buzz: 0,
+    crackle: 2
+  };
+
+  const controlDefs = [
+    { key: 'signal', label: 'Signal', desc: 'Radio signal strength. Lower values make the audio weaker, dirtier, and more buried in static.' },
+    { key: 'noise', label: 'Noise', desc: 'Constant radio hiss. At zero, the noise layer is almost silent.' },
+    { key: 'bandwidth', label: 'Bandwidth', desc: 'Frequency range. Lower values create a narrow AM/telephone sound, higher values sound cleaner.' },
+    { key: 'tuningDrift', label: 'Tuning Drift', desc: 'Unstable tuning. The station slowly slips away from the frequency and comes back.' },
+    { key: 'dropouts', label: 'Dropouts', desc: 'Short signal losses. At zero, there should be no dropouts.' },
+    { key: 'interference', label: 'Interference', desc: 'Whistles and neighboring frequencies leaking into the broadcast.' },
+    { key: 'speakerAge', label: 'Speaker Age', desc: 'Old speaker tone. Makes the sound smaller, boxier, and more worn out.' },
+    { key: 'distortion', label: 'Distortion', desc: 'Soft receiver and speaker overload. Adds dirt without harsh clipping.' },
+    { key: 'roomDistance', label: 'Room', desc: 'Makes the radio feel like it is playing in a room or farther away.' },
+    { key: 'haunt', label: 'Haunt', desc: 'A horror layer with ghostly delay, uneasy movement, and unstable signal tails.' },
+    { key: 'mumbleVoice', label: 'Mumble Voice', desc: 'Unclear synthetic speech, like another station bleeding through the static.' },
+    { key: 'buzz', label: 'Buzz', desc: '50 Hz electrical hum, like bad power or old hardware.' },
+    { key: 'crackle', label: 'Crackle', desc: 'Small pops and crackles from an aged radio transmission.' }
+  ];
+
+  const presets = {
+    'Clean Old Radio': { signal: 92, noise: 4, bandwidth: 76, tuningDrift: 3, dropouts: 0, interference: 2, speakerAge: 24, distortion: 4, roomDistance: 0, haunt: 0, mumbleVoice: 0, buzz: 0, crackle: 2 },
+    'Kitchen Broadcast': { signal: 84, noise: 10, bandwidth: 58, tuningDrift: 8, dropouts: 2, interference: 6, speakerAge: 42, distortion: 10, roomDistance: 10, haunt: 0, mumbleVoice: 0, buzz: 5, crackle: 8 },
+    'Distant AM Station': { signal: 56, noise: 34, bandwidth: 34, tuningDrift: 30, dropouts: 18, interference: 30, speakerAge: 54, distortion: 16, roomDistance: 6, haunt: 0, mumbleVoice: 10, buzz: 12, crackle: 22 },
+    'War Newsreel': { signal: 70, noise: 24, bandwidth: 28, tuningDrift: 12, dropouts: 8, interference: 18, speakerAge: 70, distortion: 34, roomDistance: 4, haunt: 0, mumbleVoice: 18, buzz: 20, crackle: 38 },
+    'Numbers Station': { signal: 62, noise: 28, bandwidth: 36, tuningDrift: 34, dropouts: 10, interference: 58, speakerAge: 34, distortion: 14, roomDistance: 0, haunt: 22, mumbleVoice: 55, buzz: 22, crackle: 15 },
+    'Broken Antenna': { signal: 32, noise: 62, bandwidth: 22, tuningDrift: 68, dropouts: 55, interference: 70, speakerAge: 78, distortion: 45, roomDistance: 12, haunt: 6, mumbleVoice: 22, buzz: 42, crackle: 58 },
+    'Analog Horror': { signal: 46, noise: 48, bandwidth: 25, tuningDrift: 58, dropouts: 32, interference: 62, speakerAge: 68, distortion: 42, roomDistance: 20, haunt: 65, mumbleVoice: 38, buzz: 38, crackle: 44 },
+    'Ghost Frequency': { signal: 40, noise: 40, bandwidth: 32, tuningDrift: 70, dropouts: 38, interference: 48, speakerAge: 48, distortion: 26, roomDistance: 22, haunt: 90, mumbleVoice: 65, buzz: 30, crackle: 28 }
+  };
+
+  let audioCtx = null;
+  let originalBuffer = null;
+  let sourceNode = null;
+  let analyser = null;
+  let currentPreset = 'Clean Old Radio';
+  let isPlaying = false;
+  let isLoopEnabled = false;
+  let rafId = null;
+  let live = null;
+  let dropoutTimer = null;
+  let driftTimer = null;
+
+  const $ = (id) => document.getElementById(id);
+  const fileInput = $('fileInput');
+  const fileName = $('fileName');
+  const playBtn = $('playBtn');
+  const stopBtn = $('stopBtn');
+  const loopBtn = $('loopBtn');
+  const exportBtn = $('exportBtn');
+  const resetBtn = $('resetBtn');
+  const statusEl = $('status');
+  const controlsEl = $('controls');
+  const presetGrid = $('presetGrid');
+  const scope = $('scope');
+  const ctx2d = scope ? scope.getContext('2d') : null;
+  const dropzone = $('dropzone');
+
+  function setStatus(text) {
+    if (statusEl) statusEl.textContent = text;
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function now() {
+    return audioCtx ? audioCtx.currentTime : 0;
+  }
+
+  function initControls() {
+    if (!controlsEl) return;
+    controlsEl.innerHTML = '';
+    controlDefs.forEach((def) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'control';
+      wrap.innerHTML = `
+        <div class="labelrow"><span>${def.label}</span><span class="value" id="val-${def.key}">${params[def.key]}</span></div>
+        <p class="desc">${def.desc}</p>
+        <input id="ctrl-${def.key}" type="range" min="0" max="100" value="${params[def.key]}" />
+      `;
+      controlsEl.appendChild(wrap);
+
+      const input = wrap.querySelector('input');
+      input.addEventListener('input', () => {
+        params[def.key] = Number(input.value);
+        const valueEl = $('val-' + def.key);
+        if (valueEl) valueEl.textContent = input.value;
+        currentPreset = 'Custom';
+        updatePresetButtons();
+        updateMeters();
+        updateNeedle();
+        updateLiveAudio();
+        setStatus(isPlaying ? 'Live controls updated.' : 'Controls updated. Press Play to hear the result.');
+      });
+    });
+  }
+
+  function initPresets() {
+    if (!presetGrid) return;
+    presetGrid.innerHTML = '';
+    Object.keys(presets).forEach((name) => {
+      const btn = document.createElement('button');
+      btn.className = 'preset-btn';
+      btn.textContent = name;
+      btn.addEventListener('click', () => applyPreset(name));
+      presetGrid.appendChild(btn);
+    });
+    updatePresetButtons();
+  }
+
+  function updatePresetButtons() {
+    if (!presetGrid) return;
+    Array.from(presetGrid.children).forEach((btn) => {
+      btn.classList.toggle('active', btn.textContent === currentPreset);
+    });
+  }
+
+  function applyPreset(name) {
+    const preset = presets[name];
+    if (!preset) return;
+    Object.assign(params, preset);
+    currentPreset = name;
+
+    controlDefs.forEach((def) => {
+      const input = $('ctrl-' + def.key);
+      const valueEl = $('val-' + def.key);
+      if (input) input.value = params[def.key];
+      if (valueEl) valueEl.textContent = params[def.key];
+    });
+
+    updatePresetButtons();
+    updateMeters();
+    updateNeedle();
+    updateLiveAudio();
+    setStatus(`Preset loaded: ${name}.`);
+  }
+
+  function updateMeters() {
+    const mSignal = $('mSignal');
+    const mNoise = $('mNoise');
+    const mDamage = $('mDamage');
+    if (mSignal) mSignal.style.width = params.signal + '%';
+    if (mNoise) mNoise.style.width = params.noise + '%';
+    const damage = Math.round((params.speakerAge + params.distortion + params.dropouts + params.haunt + params.interference + params.mumbleVoice) / 6);
+    if (mDamage) mDamage.style.width = damage + '%';
+  }
+
+  function updateNeedle() {
+    const needle = $('needle');
+    if (!needle) return;
+    const drift = (params.tuningDrift - 50) * 0.35;
+    const signal = (100 - params.signal) * 0.16;
+    needle.style.left = clamp(54 + drift + signal, 8, 92) + '%';
+  }
+
+  async function ensureAudioContext() {
+    if (!AudioContextClass) throw new Error('Web Audio API is not supported in this browser.');
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+  }
+
+  async function loadAudioFile(file) {
+    if (!file) return;
+    try {
+      await ensureAudioContext();
+      const arrayBuffer = await file.arrayBuffer();
+      originalBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      if (fileName) fileName.textContent = file.name;
+      if (playBtn) playBtn.disabled = false;
+      if (stopBtn) stopBtn.disabled = false;
+      if (loopBtn) loopBtn.disabled = false;
+      if (exportBtn) exportBtn.disabled = false;
+      setStatus(`Loaded: ${file.name}. Duration: ${originalBuffer.duration.toFixed(2)} sec.`);
+      drawIdleWave(originalBuffer);
+    } catch (err) {
+      console.error(err);
+      setStatus('Could not load this audio file. Try WAV, MP3, OGG or M4A.');
+    }
+  }
+
+  function makeNoiseBuffer(duration = 2) {
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    return buffer;
+  }
+
+  function makeCrackleBuffer(duration = 2) {
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() < 0.004 ? (Math.random() * 2 - 1) : 0;
+    return buffer;
+  }
+
+  function makeMumbleBuffer(duration = 4) {
+    const sr = audioCtx.sampleRate;
+    const buffer = audioCtx.createBuffer(1, sr * duration, sr);
+    const data = buffer.getChannelData(0);
+    const syllables = ['a', 'o', 'u', 'e', 'i', 'r', 'm', 'n'];
+    let phase1 = 0;
+    let phase2 = 0;
+    let phase3 = 0;
+    let f1 = 220;
+    let f2 = 620;
+    let f3 = 1180;
+    let env = 0;
+    let nextChange = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sr;
+      if (i >= nextChange) {
+        const s = syllables[Math.floor(Math.random() * syllables.length)];
+        if (s === 'a') { f1 = 260; f2 = 760; f3 = 1300; }
+        if (s === 'o') { f1 = 190; f2 = 520; f3 = 980; }
+        if (s === 'u') { f1 = 160; f2 = 420; f3 = 880; }
+        if (s === 'e') { f1 = 300; f2 = 980; f3 = 1600; }
+        if (s === 'i') { f1 = 340; f2 = 1250; f3 = 2100; }
+        if (s === 'r') { f1 = 180; f2 = 700; f3 = 1500; }
+        if (s === 'm' || s === 'n') { f1 = 140; f2 = 310; f3 = 620; }
+        nextChange = i + Math.floor(sr * (0.08 + Math.random() * 0.22));
+      }
+      const gate = Math.sin(t * 7 + Math.sin(t * 2.1)) > -0.35 ? 1 : 0;
+      env += ((gate ? 0.75 : 0.05) - env) * 0.006;
+      const pitchWobble = 1 + Math.sin(t * 1.7) * 0.025 + Math.sin(t * 4.1) * 0.01;
+      phase1 += 2 * Math.PI * f1 * pitchWobble / sr;
+      phase2 += 2 * Math.PI * f2 * pitchWobble / sr;
+      phase3 += 2 * Math.PI * f3 * pitchWobble / sr;
+      const throat = Math.sin(2 * Math.PI * (85 + Math.sin(t * 0.8) * 12) * t) * 0.35;
+      const vowels = Math.sin(phase1) * 0.48 + Math.sin(phase2) * 0.28 + Math.sin(phase3) * 0.16;
+      data[i] = (vowels + throat + (Math.random() * 2 - 1) * 0.025) * env * 0.55;
+    }
+    return buffer;
+  }
+
+  function makeDistortionCurve(amount) {
+    const n = 2048;
+    const curve = new Float32Array(n);
+    const k = amount * 18;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = Math.tanh(x * (1 + k)) / Math.tanh(1 + k);
+    }
+    return curve;
+  }
+
+  function playLiveGraph() {
+    sourceNode = audioCtx.createBufferSource();
+    sourceNode.buffer = originalBuffer;
+    sourceNode.loop = isLoopEnabled;
+
+    const inputGain = audioCtx.createGain();
+    const dropoutGain = audioCtx.createGain();
+    const hp = audioCtx.createBiquadFilter();
+    const lp = audioCtx.createBiquadFilter();
+    const mid = audioCtx.createBiquadFilter();
+    const shaper = audioCtx.createWaveShaper();
+    const cabinet = audioCtx.createBiquadFilter();
+    const delay = audioCtx.createDelay(0.25);
+    const delayGain = audioCtx.createGain();
+    const dryGain = audioCtx.createGain();
+    const mix = audioCtx.createGain();
+    const master = audioCtx.createGain();
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = makeNoiseBuffer(2);
+    noiseSource.loop = true;
+    const noiseFilter = audioCtx.createBiquadFilter();
+    const noiseGain = audioCtx.createGain();
+
+    const crackleSource = audioCtx.createBufferSource();
+    crackleSource.buffer = makeCrackleBuffer(2);
+    crackleSource.loop = true;
+    const crackleGain = audioCtx.createGain();
+
+    const buzzOsc = audioCtx.createOscillator();
+    buzzOsc.type = 'sine';
+    buzzOsc.frequency.value = 50;
+    const buzzGain = audioCtx.createGain();
+
+    const interOsc = audioCtx.createOscillator();
+    interOsc.type = 'sine';
+    const interGain = audioCtx.createGain();
+
+    const hauntDelay = audioCtx.createDelay(0.35);
+    const hauntGain = audioCtx.createGain();
+
+    const mumbleSource = audioCtx.createBufferSource();
+    mumbleSource.buffer = makeMumbleBuffer(4);
+    mumbleSource.loop = true;
+    const mumbleFilter = audioCtx.createBiquadFilter();
+    const mumblePresence = audioCtx.createBiquadFilter();
+    const mumbleGain = audioCtx.createGain();
+
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+
+    sourceNode.connect(inputGain);
+    inputGain.connect(dropoutGain);
+    dropoutGain.connect(hp);
+    hp.connect(lp);
+    lp.connect(mid);
+    mid.connect(shaper);
+    shaper.connect(cabinet);
+    cabinet.connect(dryGain);
+    cabinet.connect(delay);
+    delay.connect(delayGain);
+    delayGain.connect(mix);
+    dryGain.connect(mix);
+    cabinet.connect(hauntDelay);
+    hauntDelay.connect(hauntGain);
+    hauntGain.connect(mix);
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(mix);
+    crackleSource.connect(crackleGain);
+    crackleGain.connect(mix);
+    buzzOsc.connect(buzzGain);
+    buzzGain.connect(mix);
+    interOsc.connect(interGain);
+    interGain.connect(mix);
+    mumbleSource.connect(mumbleFilter);
+    mumbleFilter.connect(mumblePresence);
+    mumblePresence.connect(mumbleGain);
+    mumbleGain.connect(mix);
+    mix.connect(master);
+    master.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    live = {
+      inputGain, dropoutGain, hp, lp, mid, shaper, cabinet, delay, delayGain, dryGain, master,
+      noiseSource, noiseFilter, noiseGain, crackleSource, crackleGain, buzzOsc, buzzGain,
+      interOsc, interGain, hauntDelay, hauntGain, mumbleSource, mumbleFilter, mumblePresence, mumbleGain, mix
+    };
+
+    updateLiveAudio();
+
+    sourceNode.start();
+    noiseSource.start();
+    crackleSource.start();
+    buzzOsc.start();
+    interOsc.start();
+    mumbleSource.start();
+
+    isPlaying = true;
+    if (playBtn) playBtn.textContent = 'Restart';
+    sourceNode.onended = () => {
+      if (!isLoopEnabled) stopPlayback(false);
+    };
+    startDropoutModulation();
+    startDriftModulation();
+    animateScope();
+  }
+
+  function updateLiveAudio() {
+    updateMeters();
+    updateNeedle();
+    if (!live || !audioCtx) return;
+
+    const t = now();
+    const signal = params.signal / 100;
+    const noise = params.noise / 100;
+    const bandwidth = params.bandwidth / 100;
+    const age = params.speakerAge / 100;
+    const distortion = params.distortion / 100;
+    const room = params.roomDistance / 100;
+    const haunt = params.haunt / 100;
+    const mumbleVoice = params.mumbleVoice / 100;
+    const buzz = params.buzz / 100;
+    const crackleAmount = params.crackle / 100;
+    const interference = params.interference / 100;
+
+    const lowCut = lerp(70, 850, (1 - bandwidth) * 0.7 + age * 0.3);
+    const highCut = Math.max(700, lerp(1300, 12500, bandwidth) - age * 1800);
+    const midFreq = lerp(500, 1450, age);
+    const signalGain = lerp(0.05, 1.08, signal);
+
+    live.inputGain.gain.setTargetAtTime(signalGain, t, 0.015);
+    live.master.gain.setTargetAtTime(0.95, t, 0.015);
+    live.hp.type = 'highpass';
+    live.hp.frequency.setTargetAtTime(lowCut, t, 0.02);
+    live.hp.Q.setTargetAtTime(0.7, t, 0.02);
+    live.lp.type = 'lowpass';
+    live.lp.frequency.setTargetAtTime(highCut, t, 0.02);
+    live.lp.Q.setTargetAtTime(lerp(0.6, 1.3, age), t, 0.02);
+    live.mid.type = 'peaking';
+    live.mid.frequency.setTargetAtTime(midFreq, t, 0.02);
+    live.mid.Q.setTargetAtTime(lerp(0.7, 2.2, age), t, 0.02);
+    live.mid.gain.setTargetAtTime(lerp(0, 9, age), t, 0.02);
+    live.cabinet.type = 'peaking';
+    live.cabinet.frequency.setTargetAtTime(230, t, 0.02);
+    live.cabinet.Q.setTargetAtTime(lerp(1, 6, age), t, 0.02);
+    live.cabinet.gain.setTargetAtTime(lerp(0, 10, age), t, 0.02);
+    live.shaper.curve = makeDistortionCurve(distortion);
+    live.shaper.oversample = '2x';
+    live.noiseFilter.type = 'bandpass';
+    live.noiseFilter.frequency.setTargetAtTime(lerp(1800, 7000, bandwidth), t, 0.02);
+    live.noiseFilter.Q.setTargetAtTime(0.8, t, 0.02);
+    live.noiseGain.gain.setTargetAtTime(noise * noise * lerp(0.0, 0.32, 1 - signal + 0.35), t, 0.02);
+    live.crackleGain.gain.setTargetAtTime(crackleAmount * crackleAmount * 0.85, t, 0.02);
+    live.buzzGain.gain.setTargetAtTime(buzz * buzz * 0.16, t, 0.02);
+    live.interOsc.frequency.setTargetAtTime(lerp(260, 1900, interference), t, 0.02);
+    live.interGain.gain.setTargetAtTime(interference * interference * 0.13, t, 0.02);
+    live.delay.delayTime.setTargetAtTime(0.035, t, 0.02);
+    live.delayGain.gain.setTargetAtTime(room * 0.45, t, 0.02);
+    live.dryGain.gain.setTargetAtTime(1 - room * 0.25, t, 0.02);
+    live.hauntDelay.delayTime.setTargetAtTime(lerp(0.055, 0.24, haunt), t, 0.02);
+    live.hauntGain.gain.setTargetAtTime(haunt * 0.45, t, 0.02);
+    live.mumbleFilter.type = 'bandpass';
+    live.mumbleFilter.frequency.setTargetAtTime(lerp(420, 1300, bandwidth), t, 0.02);
+    live.mumbleFilter.Q.setTargetAtTime(lerp(0.8, 4.5, age), t, 0.02);
+    live.mumblePresence.type = 'peaking';
+    live.mumblePresence.frequency.setTargetAtTime(lerp(900, 2100, bandwidth), t, 0.02);
+    live.mumblePresence.Q.setTargetAtTime(2.2, t, 0.02);
+    live.mumblePresence.gain.setTargetAtTime(lerp(0, 9, mumbleVoice), t, 0.02);
+    live.mumbleGain.gain.setTargetAtTime(mumbleVoice * mumbleVoice * 0.42, t, 0.02);
+  }
+
+  function startDropoutModulation() {
+    clearInterval(dropoutTimer);
+    dropoutTimer = setInterval(() => {
+      if (!live || !audioCtx || !isPlaying) return;
+      const amount = params.dropouts / 100;
+      const t = now();
+      if (amount <= 0) {
+        live.dropoutGain.gain.setTargetAtTime(1, t, 0.01);
+        return;
+      }
+      if (Math.random() < amount * 0.45) {
+        live.dropoutGain.gain.cancelScheduledValues(t);
+        live.dropoutGain.gain.setValueAtTime(live.dropoutGain.gain.value, t);
+        live.dropoutGain.gain.linearRampToValueAtTime(lerp(0.05, 0.35, Math.random()), t + 0.015);
+        live.dropoutGain.gain.linearRampToValueAtTime(1, t + lerp(0.08, 0.45, amount));
+      }
+    }, 120);
+  }
+
+  function startDriftModulation() {
+    clearInterval(driftTimer);
+    driftTimer = setInterval(() => {
+      if (!live || !audioCtx || !isPlaying) return;
+      const amount = params.tuningDrift / 100;
+      const t = now();
+      const bandwidth = params.bandwidth / 100;
+      const age = params.speakerAge / 100;
+      const highBase = Math.max(700, lerp(1300, 12500, bandwidth) - age * 1800);
+      const wobble = 1 + (Math.random() * 2 - 1) * amount * 0.35;
+      live.lp.frequency.setTargetAtTime(clamp(highBase * wobble, 500, 14000), t, 0.18);
+      live.interOsc.frequency.setTargetAtTime(lerp(220, 2100, Math.random()) * amount + 220, t, 0.12);
+    }, 250);
+  }
+
+  function stopPlayback(showStatus) {
+    clearInterval(dropoutTimer);
+    clearInterval(driftTimer);
+    dropoutTimer = null;
+    driftTimer = null;
+
+    if (sourceNode) {
+      try { sourceNode.stop(); } catch (_) {}
+      try { sourceNode.disconnect(); } catch (_) {}
+      sourceNode = null;
+    }
+
+    if (live) {
+      ['noiseSource', 'crackleSource', 'buzzOsc', 'interOsc', 'mumbleSource'].forEach((key) => {
+        try { live[key].stop(); } catch (_) {}
+      });
+      try { live.master.disconnect(); } catch (_) {}
+      live = null;
+    }
+
+    isPlaying = false;
+    if (playBtn) playBtn.textContent = 'Play';
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    if (showStatus) setStatus('Stopped.');
+  }
+
+  function processBufferForExport(buffer) {
+    const sampleRate = buffer.sampleRate;
+    const length = buffer.length;
+    const out = audioCtx.createBuffer(1, length, sampleRate);
+    const sourceChannels = [];
+    for (let ch = 0; ch < buffer.numberOfChannels; ch++) sourceChannels.push(buffer.getChannelData(ch));
+    const data = out.getChannelData(0);
+
+    const signal = params.signal / 100;
+    const noise = params.noise / 100;
+    const bandwidth = params.bandwidth / 100;
+    const drift = params.tuningDrift / 100;
+    const dropouts = params.dropouts / 100;
+    const interference = params.interference / 100;
+    const age = params.speakerAge / 100;
+    const distortion = params.distortion / 100;
+    const room = params.roomDistance / 100;
+    const haunt = params.haunt / 100;
+    const mumbleVoice = params.mumbleVoice / 100;
+    const buzz = params.buzz / 100;
+    const crackleAmount = params.crackle / 100;
+
+    let lp = 0;
+    let hpLastX = 0;
+    let hp = 0;
+    let mid = 0;
+    const roomDelay = new Float32Array(Math.max(1, Math.floor(sampleRate * 0.035)));
+    let roomIndex = 0;
+    const ghostDelay = new Float32Array(Math.max(2, Math.floor(sampleRate * lerp(0.055, 0.24, haunt))));
+    let ghostIndex = 0;
+    let mumblePhase1 = 0;
+    let mumblePhase2 = 0;
+    let mumblePhase3 = 0;
+    let mumbleEnv = 0;
+    let nextMumble = 0;
+    let mf1 = 220;
+    let mf2 = 620;
+    let mf3 = 1180;
+    let dropoutEnv = 1;
+    let crackleHold = 0;
+    let crackleAmp = 0;
+
+    const lowCut = lerp(70, 850, (1 - bandwidth) * 0.7 + age * 0.3);
+    const highCut = Math.max(700, lerp(1300, 12500, bandwidth) - age * 1800);
+    const hpA = Math.exp(-2 * Math.PI * lowCut / sampleRate);
+    const lpA = Math.exp(-2 * Math.PI * highCut / sampleRate);
+    const midA = Math.exp(-2 * Math.PI * lerp(500, 1450, age) / sampleRate);
+
+    for (let i = 0; i < length; i++) {
+      let x = 0;
+      for (let ch = 0; ch < sourceChannels.length; ch++) x += sourceChannels[ch][i] || 0;
+      x /= sourceChannels.length;
+      const t = i / sampleRate;
+
+      if (dropouts > 0 && Math.random() < dropouts * 0.00045) dropoutEnv = Math.random() * 0.1;
+      dropoutEnv += (1 - dropoutEnv) * lerp(0.02, 0.002, dropouts);
+
+      const driftLfo = Math.sin(t * lerp(0.15, 1.35, drift)) * drift + Math.sin(t * 0.07) * drift * 0.7;
+      const signalWobble = clamp(1 - Math.abs(driftLfo) * 0.36, 0.2, 1.2);
+
+      hp = hpA * (hp + x - hpLastX);
+      hpLastX = x;
+      lp += (1 - lpA) * (hp - lp);
+      mid += (1 - midA) * (lp - mid);
+      let y = lp * lerp(0.95, 0.58, age) + mid * lerp(0.05, 0.68, age);
+
+      y *= lerp(0.05, 1.08, signal) * signalWobble * dropoutEnv;
+      y += (Math.random() * 2 - 1) * noise * noise * lerp(0.0, 0.32, 1 - signal + 0.35);
+      y += Math.sin(2 * Math.PI * 50 * t) * buzz * buzz * 0.16;
+      y += Math.sin(2 * Math.PI * (lerp(260, 1900, interference) + driftLfo * 80) * t) * interference * interference * 0.13;
+
+      if (crackleAmount > 0 && crackleHold <= 0 && Math.random() < crackleAmount * 0.0025) {
+        crackleHold = Math.floor(3 + Math.random() * 55);
+        crackleAmp = (Math.random() * 2 - 1) * lerp(0.08, 0.7, crackleAmount);
+      }
+      if (crackleHold > 0) {
+        y += crackleAmp * (crackleHold / 55);
+        crackleHold--;
+      }
+
+      const ghostRead = ghostDelay[ghostIndex];
+      ghostDelay[ghostIndex] = y;
+      ghostIndex = (ghostIndex + 1) % ghostDelay.length;
+      y += ghostRead * haunt * 0.45;
+
+      if (mumbleVoice > 0) {
+        if (i >= nextMumble) {
+          const vowels = [[260, 760, 1300], [190, 520, 980], [160, 420, 880], [300, 980, 1600], [340, 1250, 2100], [140, 310, 620]];
+          const v = vowels[Math.floor(Math.random() * vowels.length)];
+          mf1 = v[0];
+          mf2 = v[1];
+          mf3 = v[2];
+          nextMumble = i + Math.floor(sampleRate * (0.08 + Math.random() * 0.22));
+        }
+        const gate = Math.sin(t * 7 + Math.sin(t * 2.1)) > -0.35 ? 1 : 0;
+        mumbleEnv += ((gate ? 0.75 : 0.05) - mumbleEnv) * 0.006;
+        const wob = 1 + Math.sin(t * 1.7) * 0.025;
+        mumblePhase1 += 2 * Math.PI * mf1 * wob / sampleRate;
+        mumblePhase2 += 2 * Math.PI * mf2 * wob / sampleRate;
+        mumblePhase3 += 2 * Math.PI * mf3 * wob / sampleRate;
+        const mumble = (Math.sin(mumblePhase1) * 0.48 + Math.sin(mumblePhase2) * 0.28 + Math.sin(mumblePhase3) * 0.16) * mumbleEnv;
+        y += mumble * mumbleVoice * mumbleVoice * 0.42;
+      }
+
+      const drive = 1 + distortion * 18;
+      const driven = Math.tanh(y * drive) / Math.tanh(drive);
+      y = lerp(y, driven, distortion * 0.55);
+      y += Math.sin(2 * Math.PI * 230 * t) * y * age * 0.09;
+
+      const delayed = roomDelay[roomIndex];
+      roomDelay[roomIndex] = y;
+      roomIndex = (roomIndex + 1) % roomDelay.length;
+      y = lerp(y, delayed * 0.55 + y * 0.45, room * 0.7);
+      data[i] = clamp(y * 0.95, -1, 1);
+    }
+    return out;
+  }
+
+  function encodeWav(buffer) {
+    const samples = buffer.getChannelData(0);
+    const sampleRate = buffer.sampleRate;
+    const bytesPerSample = 2;
+    const dataSize = samples.length * bytesPerSample;
+    const ab = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(ab);
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * bytesPerSample, true);
+    view.setUint16(32, bytesPerSample, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++, offset += 2) {
+      const s = clamp(samples[i], -1, 1);
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+    return ab;
+  }
+
+  function writeString(view, offset, str) {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  }
+
+  function animateScope() {
+    if (!analyser || !ctx2d || !scope) return;
+    const data = new Uint8Array(analyser.fftSize);
+    const draw = () => {
+      if (!analyser || !ctx2d || !scope) return;
+      analyser.getByteTimeDomainData(data);
+      ctx2d.fillStyle = '#070707';
+      ctx2d.fillRect(0, 0, scope.width, scope.height);
+      ctx2d.fillStyle = 'rgba(146,176,106,.24)';
+      for (let x = 0; x < scope.width; x += 40) ctx2d.fillRect(x, 0, 1, scope.height);
+      for (let y = 0; y < scope.height; y += 30) ctx2d.fillRect(0, y, scope.width, 1);
+      ctx2d.strokeStyle = '#d6a94a';
+      ctx2d.lineWidth = 2;
+      ctx2d.beginPath();
+      const slice = scope.width / data.length;
+      for (let i = 0; i < data.length; i++) {
+        const v = data[i] / 128.0;
+        const y = v * scope.height / 2;
+        const x = i * slice;
+        if (i === 0) ctx2d.moveTo(x, y);
+        else ctx2d.lineTo(x, y);
+      }
+      ctx2d.stroke();
+      rafId = requestAnimationFrame(draw);
+    };
+    draw();
+  }
+
+  function drawIdleWave(buffer) {
+    if (!ctx2d || !scope || !buffer) return;
+    ctx2d.fillStyle = '#070707';
+    ctx2d.fillRect(0, 0, scope.width, scope.height);
+    ctx2d.fillStyle = 'rgba(146,176,106,.24)';
+    for (let x = 0; x < scope.width; x += 40) ctx2d.fillRect(x, 0, 1, scope.height);
+    for (let y = 0; y < scope.height; y += 30) ctx2d.fillRect(0, y, scope.width, 1);
+    const data = buffer.getChannelData(0);
+    ctx2d.strokeStyle = '#92b06a';
+    ctx2d.lineWidth = 1.5;
+    ctx2d.beginPath();
+    const step = Math.ceil(data.length / scope.width);
+    for (let x = 0; x < scope.width; x++) {
+      let min = 1;
+      let max = -1;
+      for (let j = 0; j < step; j++) {
+        const v = data[(x * step + j) | 0] || 0;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+      const y1 = (1 + min) * scope.height / 2;
+      const y2 = (1 + max) * scope.height / 2;
+      if (x === 0) ctx2d.moveTo(x, y1);
+      ctx2d.lineTo(x, y2);
+    }
+    ctx2d.stroke();
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      await loadAudioFile(e.target.files[0]);
+    });
+  }
+
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+    dropzone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      await loadAudioFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  if (playBtn) {
+    playBtn.addEventListener('click', async () => {
+      if (!originalBuffer) return;
+      await ensureAudioContext();
+      if (isPlaying) stopPlayback(false);
+      try {
+        playLiveGraph();
+        setStatus(`Playing. Faders work live. Preset: ${currentPreset}.`);
+      } catch (err) {
+        console.error(err);
+        setStatus('Playback failed. Open the browser console for details.');
+      }
+    });
+  }
+
+  if (stopBtn) stopBtn.addEventListener('click', () => stopPlayback(true));
+
+  if (loopBtn) {
+    loopBtn.addEventListener('click', () => {
+      isLoopEnabled = !isLoopEnabled;
+      loopBtn.textContent = isLoopEnabled ? 'Loop: On' : 'Loop: Off';
+      loopBtn.classList.toggle('loop-on', isLoopEnabled);
+      if (sourceNode) sourceNode.loop = isLoopEnabled;
+      setStatus(isLoopEnabled ? 'Loop enabled.' : 'Loop disabled.');
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      applyPreset('Clean Old Radio');
+      isLoopEnabled = false;
+      if (loopBtn) {
+        loopBtn.textContent = 'Loop: Off';
+        loopBtn.classList.remove('loop-on');
+      }
+      if (sourceNode) sourceNode.loop = false;
+    });
+  }
+
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      if (!originalBuffer) return;
+      stopPlayback(false);
+      setStatus('Rendering WAV export...');
+      try {
+        const rendered = processBufferForExport(originalBuffer);
+        const wav = encodeWav(rendered);
+        const blob = new Blob([wav], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'attaq-old-radio.wav';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus('Export complete: attaq-old-radio.wav');
+      } catch (err) {
+        console.error(err);
+        setStatus('Export failed. Try a shorter file.');
+      }
+    });
+  }
+
+  initControls();
+  initPresets();
+  applyPreset('Clean Old Radio');
+  updateMeters();
+  updateNeedle();
+})();
+</script>
+</body>
+</html>
