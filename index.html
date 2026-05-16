@@ -732,7 +732,7 @@
     </main>
 
     <div class="footer">
-      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.6</div>
+      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.8</div>
 
       <div class="beta-note">
         Beta version. Render may not perfectly match preview yet. Development is in progress.
@@ -741,6 +741,8 @@
       <div class="devlog">
         <div class="devlog-title">Devlog</div>
         <div class="devlog-list">
+          <div class="devlog-item"><span class="devlog-version">v 0.1.8</span> – Improved off-station tuning behavior: near the edges the clean signal can fully disappear while noise and interference remain and intensify.</div>
+          <div class="devlog-item"><span class="devlog-version">v 0.1.7</span> – Added Tuning Drift Speed and renamed Tuning Drift to Tuning Drift Range.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.6</span> – Updated Broken Antenna preset with stronger tuning drift, buzz, haunt, speaker age and dropout settings.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.5</span> – Radio Tuning meter now shows the actual tuning position, including automatic Tuning Drift. Removed frequency numbers from the tuning display.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.4</span> – Reordered radio controls by signal flow. Tuning Drift now works as automated tuning range, moving the radio back and forth around the manual Tuning position.</div>
@@ -757,7 +759,8 @@
     const PARAMS = [
       { id: 'signal', name: 'Signal', min: 0, max: 100, value: 92, hint: 'Base radio signal strength. Lower values make the station weaker and more buried.' },
       { id: 'tuning', name: 'Tuning', min: -100, max: 100, value: 0, hint: 'Manual radio tuning. Center is clean, left or right drifts into static and interference.' },
-      { id: 'tuningDrift', name: 'Tuning Drift', min: 0, max: 300, value: 24, hint: 'Automatic tuning movement. Sets the range where the radio slowly tunes back and forth.' },
+      { id: 'tuningDrift', name: 'Tuning Drift Range', min: 0, max: 300, value: 24, hint: 'Automatic tuning movement range. Sets how far the radio drifts away from the tuned position.' },
+      { id: 'tuningDriftSpeed', name: 'Tuning Drift Speed', min: 0, max: 100, value: 24, hint: 'How fast the automatic tuning moves back and forth.' },
       { id: 'speakerAge', name: 'Speaker Age', min: 0, max: 300, value: 228, hint: 'Old speaker coloration, box resonance and worn-out tone. Extended to 300.' },
       { id: 'bandwidth', name: 'Bandwidth', min: 0, max: 300, value: 193, hint: 'Frequency range. 0 is very narrow AM, 300 is much cleaner and wider.' },
       { id: 'dropouts', name: 'Dropouts', min: 0, max: 100, value: 0, hint: 'Short signal losses from bad reception.' },
@@ -772,16 +775,16 @@
     ];
 
     const PRESETS = {
-      reset:    { signal: 100, tuning: 0, noise: 0,  bandwidth: 300, tuningDrift: 0,   dropouts: 0,  interference: 0,  speakerAge: 0,   distortion: 0,  roomDistance: 0,  haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 0 },
-      cleanOld:  { signal: 92,  tuning: 0, noise: 11, bandwidth: 193, tuningDrift: 24,  dropouts: 0,  interference: 2,  speakerAge: 228, distortion: 0,  roomDistance: 0,  haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 42 },
-      badSignal: { signal: 88,  tuning: 0, noise: 8,  bandwidth: 150, tuningDrift: 96,  dropouts: 0,  interference: 11, speakerAge: 300, distortion: 12, roomDistance: 12, haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 30 },
-      kitchen:   { signal: 84,  tuning: 0, noise: 10, bandwidth: 174, tuningDrift: 42,  dropouts: 2,  interference: 4,  speakerAge: 126, distortion: 10, roomDistance: 10, haunt: 0,   mumbleVoice: 0,   buzz: 4,  crackle: 8 },
-      distant:   { signal: 58,  tuning: 0, noise: 32, bandwidth: 108, tuningDrift: 72,  dropouts: 12, interference: 12, speakerAge: 156, distortion: 14, roomDistance: 8,  haunt: 0,   mumbleVoice: 18,  buzz: 8,  crackle: 20 },
-      newsreel:  { signal: 72,  tuning: 0, noise: 22, bandwidth: 84,  tuningDrift: 30,  dropouts: 6,  interference: 8,  speakerAge: 210, distortion: 28, roomDistance: 4,  haunt: 0,   mumbleVoice: 24,  buzz: 14, crackle: 34 },
-      numbers:   { signal: 64,  tuning: 0, noise: 26, bandwidth: 114, tuningDrift: 84,  dropouts: 8,  interference: 24, speakerAge: 108, distortion: 12, roomDistance: 0,  haunt: 18,  mumbleVoice: 135, buzz: 14, crackle: 14 },
-      broken:    { signal: 100, tuning: 0, noise: 24, bandwidth: 143, tuningDrift: 300, dropouts: 100, interference: 7,  speakerAge: 274, distortion: 32, roomDistance: 40, haunt: 0,   mumbleVoice: 33,  buzz: 100, crackle: 54 },
-      horror:    { signal: 48,  tuning: 0, noise: 44, bandwidth: 78,  tuningDrift: 150, dropouts: 26, interference: 28, speakerAge: 204, distortion: 34, roomDistance: 20, haunt: 65,  mumbleVoice: 84,  buzz: 24, crackle: 40 },
-      ghost:     { signal: 42,  tuning: 0, noise: 38, bandwidth: 102, tuningDrift: 174, dropouts: 30, interference: 22, speakerAge: 144, distortion: 22, roomDistance: 22, haunt: 90,  mumbleVoice: 150, buzz: 18, crackle: 26 }
+      reset:    { signal: 100, tuning: 0, noise: 0,  bandwidth: 300, tuningDrift: 0, tuningDriftSpeed: 0,   dropouts: 0,  interference: 0,  speakerAge: 0,   distortion: 0,  roomDistance: 0,  haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 0 },
+      cleanOld:  { signal: 92,  tuning: 0, noise: 11, bandwidth: 193, tuningDrift: 24, tuningDriftSpeed: 18,  dropouts: 0,  interference: 2,  speakerAge: 228, distortion: 0,  roomDistance: 0,  haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 42 },
+      badSignal: { signal: 88,  tuning: 0, noise: 8,  bandwidth: 150, tuningDrift: 96, tuningDriftSpeed: 32,  dropouts: 0,  interference: 11, speakerAge: 300, distortion: 12, roomDistance: 12, haunt: 0,   mumbleVoice: 0,   buzz: 0,  crackle: 30 },
+      kitchen:   { signal: 84,  tuning: 0, noise: 10, bandwidth: 174, tuningDrift: 42, tuningDriftSpeed: 22,  dropouts: 2,  interference: 4,  speakerAge: 126, distortion: 10, roomDistance: 10, haunt: 0,   mumbleVoice: 0,   buzz: 4,  crackle: 8 },
+      distant:   { signal: 58,  tuning: 0, noise: 32, bandwidth: 108, tuningDrift: 72, tuningDriftSpeed: 38,  dropouts: 12, interference: 12, speakerAge: 156, distortion: 14, roomDistance: 8,  haunt: 0,   mumbleVoice: 18,  buzz: 8,  crackle: 20 },
+      newsreel:  { signal: 72,  tuning: 0, noise: 22, bandwidth: 84,  tuningDrift: 30, tuningDriftSpeed: 18,  dropouts: 6,  interference: 8,  speakerAge: 210, distortion: 28, roomDistance: 4,  haunt: 0,   mumbleVoice: 24,  buzz: 14, crackle: 34 },
+      numbers:   { signal: 64,  tuning: 0, noise: 26, bandwidth: 114, tuningDrift: 84, tuningDriftSpeed: 28,  dropouts: 8,  interference: 24, speakerAge: 108, distortion: 12, roomDistance: 0,  haunt: 18,  mumbleVoice: 135, buzz: 14, crackle: 14 },
+      broken:    { signal: 100, tuning: 0, noise: 24, bandwidth: 143, tuningDrift: 300, tuningDriftSpeed: 62, dropouts: 100, interference: 7,  speakerAge: 274, distortion: 32, roomDistance: 40, haunt: 0,   mumbleVoice: 33,  buzz: 100, crackle: 54 },
+      horror:    { signal: 48,  tuning: 0, noise: 44, bandwidth: 78,  tuningDrift: 150, tuningDriftSpeed: 42, dropouts: 26, interference: 28, speakerAge: 204, distortion: 34, roomDistance: 20, haunt: 65,  mumbleVoice: 84,  buzz: 24, crackle: 40 },
+      ghost:     { signal: 42,  tuning: 0, noise: 38, bandwidth: 102, tuningDrift: 174, tuningDriftSpeed: 46, dropouts: 30, interference: 22, speakerAge: 144, distortion: 22, roomDistance: 22, haunt: 90,  mumbleVoice: 150, buzz: 18, crackle: 26 }
     };
 
     const state = {
@@ -832,6 +835,10 @@
 
     function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
     function lerp(a, b, t) { return a + (b - a) * t; }
+    function smoothstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
     function shorten(str, n) { return str.length > n ? str.slice(0, n - 1) + '…' : str; }
 
     function ensureContext() {
@@ -1115,6 +1122,8 @@
       const manualTune = (v.tuning || 0) / 100;
       const tuningLoss = Math.min(1, Math.abs(manualTune));
       const tuningCurve = Math.pow(tuningLoss, 1.15);
+      const offStation = smoothstep(0.58, 0.92, tuningLoss);
+      const stationPresence = 1 - offStation;
       const noise = v.noise / 100;
       const bandwidth = v.bandwidth / 300;
       const age = v.speakerAge / 100;
@@ -1132,7 +1141,7 @@
       const set = (param, value, time = .03) => smooth ? param.setTargetAtTime(value, t, time) : param.setValueAtTime(value, t);
 
       n.inputGain.gain.cancelScheduledValues(t);
-      set(n.inputGain.gain, lerp(0.05, 1.08, signal) * clamp(1 - tuningCurve * 0.72, 0.18, 1));
+      set(n.inputGain.gain, lerp(0.05, 1.08, signal) * Math.pow(stationPresence, 1.65));
       n.hp.type = 'highpass'; set(n.hp.frequency, clamp(lowCut * (1 + tuningCurve * 1.25), 40, 1800)); set(n.hp.Q, .7);
       n.lp.type = 'lowpass'; set(n.lp.frequency, clamp(highCut * (1 + manualTune * 0.62), 360, Math.min(ctx.sampleRate * 0.45, 16000))); set(n.lp.Q, lerp(.6, 2.8, clamp(ageDrive / 3, 0, 1)));
       n.mid.type = 'peaking'; set(n.mid.frequency, midFreq); set(n.mid.Q, lerp(.7, 4.4, clamp(ageDrive / 3, 0, 1))); set(n.mid.gain, lerp(0, 16, clamp(ageDrive / 3, 0, 1)));
@@ -1140,11 +1149,11 @@
       n.shaper.curve = makeDistortionCurve(distortion);
       n.shaper.oversample = '2x';
       n.noiseFilter.type = 'bandpass'; set(n.noiseFilter.frequency, lerp(1800, 7000, bandwidth)); set(n.noiseFilter.Q, .8);
-      n.noiseGain.gain.cancelScheduledValues(t); set(n.noiseGain.gain, noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 4.8) + tuningCurve * 0.055);
+      n.noiseGain.gain.cancelScheduledValues(t); set(n.noiseGain.gain, noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 5.6) + offStation * 0.24 + tuningCurve * 0.035);
       set(n.crackleGain.gain, crackle * crackle * .85);
       set(n.buzzGain.gain, buzz * buzz * .16);
       set(n.interOsc.frequency, lerp(260, 1900, interference) + manualTune * 880);
-      n.interGain.gain.cancelScheduledValues(t); set(n.interGain.gain, interference * interference * .13 * (1 + tuningCurve * 5.2) + tuningCurve * (0.035 + interference * 0.07));
+      n.interGain.gain.cancelScheduledValues(t); set(n.interGain.gain, interference * interference * .13 * (1 + tuningCurve * 6.4) + offStation * (0.08 + interference * 0.12) + tuningCurve * 0.025);
       set(n.delay.delayTime, .035); set(n.delayGain.gain, room * .45); set(n.dryGain.gain, 1 - room * .25);
       set(n.hauntDelay.delayTime, lerp(.055, .24, haunt)); set(n.hauntGain.gain, haunt * .45);
       n.mumbleFilter.type = 'bandpass'; set(n.mumbleFilter.frequency, lerp(260, 980, bandwidth)); set(n.mumbleFilter.Q, lerp(.8, 5.8, clamp(ageDrive / 3, 0, 1)));
@@ -1193,6 +1202,7 @@
         }
 
         const driftRange = clamp((v.tuningDrift || 0) / 300, 0, 1);
+        const driftSpeed = clamp((v.tuningDriftSpeed || 0) / 100, 0, 1);
         const manualTune = (v.tuning || 0) / 100;
         const signal = v.signal / 100;
         const noise = v.noise / 100;
@@ -1207,22 +1217,24 @@
         } else {
           if (autoTuneHold <= 0) {
             autoTuneTarget = (Math.random() * 2 - 1) * driftRange;
-            autoTuneHold = 34 + Math.random() * 86;
+            autoTuneHold = lerp(120, 18, driftSpeed) + Math.random() * lerp(140, 26, driftSpeed);
           }
           autoTuneHold--;
-          autoTuneEnv += (autoTuneTarget - autoTuneEnv) * 0.012;
-          driftPhase += 0.012;
+          autoTuneEnv += (autoTuneTarget - autoTuneEnv) * lerp(0.004, 0.03, driftSpeed);
+          driftPhase += lerp(0.004, 0.035, driftSpeed);
         }
 
-        const slowAutoTune = autoTuneEnv + Math.sin(driftPhase * lerp(.25, 1.2, driftRange)) * driftRange * .22;
+        const slowAutoTune = autoTuneEnv + Math.sin(driftPhase * lerp(0.25, 3.2, driftSpeed)) * driftRange * lerp(0.12, 0.34, driftSpeed);
         const effectiveTune = clamp(manualTune + slowAutoTune, -1, 1);
         state.visualTune = effectiveTune;
         updateNeedles();
         const tuningCurve = Math.pow(Math.abs(effectiveTune), 1.15);
+        const offStation = smoothstep(0.58, 0.92, Math.abs(effectiveTune));
+        const stationPresence = 1 - offStation;
 
-        const baseSignalGain = lerp(.05, 1.08, signal) * clamp(1 - tuningCurve * .72, .18, 1);
-        const baseNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 4.8) + tuningCurve * .055;
-        const baseInterGain = interference * interference * .13 * (1 + tuningCurve * 5.2) + tuningCurve * (.035 + interference * .07);
+        const baseSignalGain = lerp(.05, 1.08, signal) * Math.pow(stationPresence, 1.65);
+        const baseNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 5.6) + offStation * .24 + tuningCurve * .035;
+        const baseInterGain = interference * interference * .13 * (1 + tuningCurve * 6.4) + offStation * (.08 + interference * .12) + tuningCurve * .025;
         const highBaseRaw = Math.max(420, lerp(650, Math.min(ctx.sampleRate * 0.45, 15500), bandwidth) - ageDrive * 1750);
         const lowBaseRaw = lerp(70, 1200, (1 - bandwidth) * .76 + clamp(ageDrive / 3, 0, 1) * .34);
         const highBase = clamp(highBaseRaw * (1 + effectiveTune * .62), 360, Math.min(ctx.sampleRate * 0.45, 16000));
@@ -1391,15 +1403,18 @@
       const manualTune = (values.tuning || 0) / 100;
       const tuningLoss = Math.min(1, Math.abs(manualTune));
       const tuningCurve = Math.pow(tuningLoss, 1.15);
+      const offStation = smoothstep(0.58, 0.92, tuningLoss);
+      const stationPresence = 1 - offStation;
       const noise = values.noise / 100;
       const interference = values.interference / 100;
       const bandwidth = values.bandwidth / 300;
       const age = values.speakerAge / 100;
       const drift = values.tuningDrift / 100;
+      const driftSpeed = clamp((values.tuningDriftSpeed || 0) / 100, 0, 1);
       const dropouts = values.dropouts / 100;
-      const baseSignalGain = lerp(.05, 1.08, signal) * clamp(1 - tuningCurve * .72, .18, 1);
-      const baseNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 4.8) + tuningCurve * .055;
-      const baseInterGain = interference * interference * .13 * (1 + tuningCurve * 5.2) + tuningCurve * (.035 + interference * .07);
+      const baseSignalGain = lerp(.05, 1.08, signal) * Math.pow(stationPresence, 1.65);
+      const baseNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 5.6) + offStation * .24 + tuningCurve * .035;
+      const baseInterGain = interference * interference * .13 * (1 + tuningCurve * 6.4) + offStation * (.08 + interference * .12) + tuningCurve * .025;
       const ageDrive = clamp(age, 0, 3);
       const highBaseRaw = Math.max(420, lerp(650, Math.min(ctx.sampleRate * 0.45, 15500), bandwidth) - ageDrive * 1750);
       const lowBaseRaw = lerp(70, 1200, (1 - bandwidth) * .76 + clamp(ageDrive / 3, 0, 1) * .34);
@@ -1414,18 +1429,20 @@
           n.dropoutGain.gain.linearRampToValueAtTime(low, t + .018);
           n.dropoutGain.gain.linearRampToValueAtTime(1, t + len);
         }
-        if (drift > 0 && rand() < clamp(.08 + (drift / 3) * .35, 0, .96)) {
+        if (drift > 0 && rand() < clamp(.05 + (drift / 3) * (.18 + driftSpeed * .32), 0, .96)) {
           const driftRange = clamp(drift / 3, 0, 1);
           const autoTune = (rand() * 2 - 1) * driftRange;
           const effectiveTune = clamp(manualTune + autoTune, -1, 1);
           const tuningCurveAuto = Math.pow(Math.abs(effectiveTune), 1.15);
-          const fadeIn = .35 + driftRange * .35;
-          const hold = .25 + driftRange * .45;
-          const fadeOut = .45 + driftRange * .65;
+          const offStationAuto = smoothstep(0.58, 0.92, Math.abs(effectiveTune));
+          const stationPresenceAuto = 1 - offStationAuto;
+          const fadeIn = lerp(.75, .18, driftSpeed) + driftRange * .18;
+          const hold = lerp(.55, .12, driftSpeed) + driftRange * .16;
+          const fadeOut = lerp(.85, .24, driftSpeed) + driftRange * .22;
           const back = t + fadeIn + hold;
-          const tunedSignalGain = lerp(.05, 1.08, signal) * clamp(1 - tuningCurveAuto * .72, .12, 1);
-          const tunedNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurveAuto * 4.8) + tuningCurveAuto * .055;
-          const tunedInterGain = interference * interference * .13 * (1 + tuningCurveAuto * 5.2) + tuningCurveAuto * (.035 + interference * .07);
+          const tunedSignalGain = lerp(.05, 1.08, signal) * Math.pow(stationPresenceAuto, 1.65);
+          const tunedNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurveAuto * 5.6) + offStationAuto * .24 + tuningCurveAuto * .035;
+          const tunedInterGain = interference * interference * .13 * (1 + tuningCurveAuto * 6.4) + offStationAuto * (.08 + interference * .12) + tuningCurveAuto * .025;
           n.inputGain.gain.linearRampToValueAtTime(tunedSignalGain, t + fadeIn);
           n.noiseGain.gain.linearRampToValueAtTime(tunedNoiseGain, t + fadeIn);
           n.interGain.gain.linearRampToValueAtTime(tunedInterGain, t + fadeIn);
