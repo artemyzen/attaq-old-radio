@@ -76,6 +76,53 @@
       max-width: 720px;
     }
 
+    .tools-link {
+      min-width: 260px;
+      display: grid;
+      gap: 4px;
+      padding: 12px 14px;
+      text-decoration: none;
+      color: var(--text);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)),
+        rgba(255,255,255,.02);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.04);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+
+    .tools-link:hover {
+      transform: translateY(-1px);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
+        rgba(255,255,255,.03);
+      border-color: rgba(255,226,170,.34);
+    }
+
+    .tools-link-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .tools-link-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+
+    .tools-link-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
     .radio-badge {
       min-width: 270px;
       display: grid;
@@ -291,15 +338,13 @@
     }
 
     .mini-panel::before {
-      content: "530  700  900  1100  1400";
+      content: "";
       position: absolute;
       left: 8px;
       right: 8px;
       top: 9px;
-      color: rgba(241,231,207,.55);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 9px;
-      white-space: nowrap;
+      height: 1px;
+      background: transparent;
     }
 
     .mini-panel::after {
@@ -568,6 +613,7 @@
     @media (max-width: 900px) {
       .main { grid-template-columns: 1fr; }
       header { align-items: flex-start; flex-direction: column; }
+      .tools-link { width: 100%; min-width: 0; }
       .radio-badge { width: 100%; min-width: 0; }
     }
 
@@ -591,6 +637,12 @@
         <h1>ATTAQ OLD RADIO</h1>
         <div class="subtitle">A vintage broadcast degradation emulator for static, bad tuning, distant AM tone, speaker dirt, interference, ghost signal and strange background voices.</div>
       </div>
+
+      <a class="tools-link" href="https://artemyzen.github.io/attaq-audio-tools/" target="_blank" rel="noopener">
+        <span class="tools-link-label">More Tools</span>
+        <span class="tools-link-title">Other ATTAQ Audio Tools</span>
+        <span class="tools-link-subtitle">Open the full collection</span>
+      </a>
     </header>
 
     <main class="main">
@@ -680,7 +732,7 @@
     </main>
 
     <div class="footer">
-      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.3</div>
+      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.6</div>
 
       <div class="beta-note">
         Beta version. Render may not perfectly match preview yet. Development is in progress.
@@ -689,6 +741,9 @@
       <div class="devlog">
         <div class="devlog-title">Devlog</div>
         <div class="devlog-list">
+          <div class="devlog-item"><span class="devlog-version">v 0.1.6</span> – Updated Broken Antenna preset with stronger tuning drift, buzz, haunt, speaker age and dropout settings.</div>
+          <div class="devlog-item"><span class="devlog-version">v 0.1.5</span> – Radio Tuning meter now shows the actual tuning position, including automatic Tuning Drift. Removed frequency numbers from the tuning display.</div>
+          <div class="devlog-item"><span class="devlog-version">v 0.1.4</span> – Reordered radio controls by signal flow. Tuning Drift now works as automated tuning range, moving the radio back and forth around the manual Tuning position.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.3</span> – Clean Old Radio is now the default startup preset. Radio Tuning meter now reacts only to the Tuning slider. Removed the tuning graphic from the header. Added beta note and improved devlog block.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.2</span> – Added manual Tuning control for realistic station searching between clean signal, static and interference.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.1</span> – Reduced presets to Clean Old Radio, Broken Antenna and Reset. Presets moved into a separate block.</div>
@@ -700,14 +755,14 @@
 
   <script>
     const PARAMS = [
-      { id: 'signal', name: 'Signal', min: 0, max: 100, value: 92, hint: 'Radio signal strength. Lower values get weaker and more buried.' },
+      { id: 'signal', name: 'Signal', min: 0, max: 100, value: 92, hint: 'Base radio signal strength. Lower values make the station weaker and more buried.' },
       { id: 'tuning', name: 'Tuning', min: -100, max: 100, value: 0, hint: 'Manual radio tuning. Center is clean, left or right drifts into static and interference.' },
-      { id: 'noise', name: 'Noise', min: 0, max: 100, value: 11, hint: 'Constant radio static and high-frequency hiss.' },
-      { id: 'bandwidth', name: 'Bandwidth', min: 0, max: 300, value: 193, hint: 'Frequency range. 0 is very narrow AM, 300 is much cleaner and wider.' },
-      { id: 'tuningDrift', name: 'Tuning Drift', min: 0, max: 300, value: 24, hint: 'Smooth station drift, like turning the tuning knob. Extended to 300 for stronger drift.' },
-      { id: 'dropouts', name: 'Dropouts', min: 0, max: 100, value: 0, hint: 'Short signal losses from bad reception.' },
-      { id: 'interference', name: 'Interference', min: 0, max: 100, value: 2, hint: 'Whistles and neighboring station bleed.' },
+      { id: 'tuningDrift', name: 'Tuning Drift', min: 0, max: 300, value: 24, hint: 'Automatic tuning movement. Sets the range where the radio slowly tunes back and forth.' },
       { id: 'speakerAge', name: 'Speaker Age', min: 0, max: 300, value: 228, hint: 'Old speaker coloration, box resonance and worn-out tone. Extended to 300.' },
+      { id: 'bandwidth', name: 'Bandwidth', min: 0, max: 300, value: 193, hint: 'Frequency range. 0 is very narrow AM, 300 is much cleaner and wider.' },
+      { id: 'dropouts', name: 'Dropouts', min: 0, max: 100, value: 0, hint: 'Short signal losses from bad reception.' },
+      { id: 'noise', name: 'Noise', min: 0, max: 100, value: 11, hint: 'Constant radio static and high-frequency hiss.' },
+      { id: 'interference', name: 'Interference', min: 0, max: 100, value: 2, hint: 'Whistles and neighboring station bleed.' },
       { id: 'distortion', name: 'Distortion', min: 0, max: 100, value: 0, hint: 'Soft receiver and speaker overload.' },
       { id: 'roomDistance', name: 'Room', min: 0, max: 100, value: 0, hint: 'Makes the radio feel farther away in a room.' },
       { id: 'haunt', name: 'Haunt', min: 0, max: 100, value: 0, hint: 'Ghostly delay and strange unstable signal tails.' },
@@ -724,7 +779,7 @@
       distant:   { signal: 58,  tuning: 0, noise: 32, bandwidth: 108, tuningDrift: 72,  dropouts: 12, interference: 12, speakerAge: 156, distortion: 14, roomDistance: 8,  haunt: 0,   mumbleVoice: 18,  buzz: 8,  crackle: 20 },
       newsreel:  { signal: 72,  tuning: 0, noise: 22, bandwidth: 84,  tuningDrift: 30,  dropouts: 6,  interference: 8,  speakerAge: 210, distortion: 28, roomDistance: 4,  haunt: 0,   mumbleVoice: 24,  buzz: 14, crackle: 34 },
       numbers:   { signal: 64,  tuning: 0, noise: 26, bandwidth: 114, tuningDrift: 84,  dropouts: 8,  interference: 24, speakerAge: 108, distortion: 12, roomDistance: 0,  haunt: 18,  mumbleVoice: 135, buzz: 14, crackle: 14 },
-      broken:    { signal: 100, tuning: 0, noise: 15, bandwidth: 174, tuningDrift: 173, dropouts: 100, interference: 5,  speakerAge: 234, distortion: 2,  roomDistance: 74, haunt: 25,  mumbleVoice: 12,  buzz: 30, crackle: 54 },
+      broken:    { signal: 100, tuning: 0, noise: 24, bandwidth: 143, tuningDrift: 300, dropouts: 100, interference: 7,  speakerAge: 274, distortion: 32, roomDistance: 40, haunt: 0,   mumbleVoice: 33,  buzz: 100, crackle: 54 },
       horror:    { signal: 48,  tuning: 0, noise: 44, bandwidth: 78,  tuningDrift: 150, dropouts: 26, interference: 28, speakerAge: 204, distortion: 34, roomDistance: 20, haunt: 65,  mumbleVoice: 84,  buzz: 24, crackle: 40 },
       ghost:     { signal: 42,  tuning: 0, noise: 38, bandwidth: 102, tuningDrift: 174, dropouts: 30, interference: 22, speakerAge: 144, distortion: 22, roomDistance: 22, haunt: 90,  mumbleVoice: 150, buzz: 18, crackle: 26 }
     };
@@ -744,6 +799,7 @@
       recordSampleRate: 44100,
       recordChannels: 2,
       fileName: '',
+      visualTune: 0,
       values: Object.fromEntries(PARAMS.map(p => [p.id, p.value]))
     };
 
@@ -823,8 +879,8 @@
     }
 
     function updateNeedles() {
-      const manualTune = state.values.tuning || 0;
-      const left = `${clamp(52 + manualTune * 0.4, 8, 92)}%`;
+      const tune = state.playing ? (state.visualTune || 0) : ((state.values.tuning || 0) / 100);
+      const left = `${clamp(52 + tune * 40, 8, 92)}%`;
       if (els.miniNeedle) els.miniNeedle.style.left = left;
     }
 
@@ -1106,9 +1162,9 @@
       let driftPhase = Math.random() * 1000;
       let dropoutHold = 0;
       let dropoutTarget = 1;
-      let driftEnv = 0;
-      let driftTarget = 0;
-      let driftHold = 0;
+      let autoTuneEnv = 0;
+      let autoTuneTarget = 0;
+      let autoTuneHold = 0;
 
       function tick() {
         if (!state.playing || !state.nodes.source) return;
@@ -1136,52 +1192,48 @@
           n.dropoutGain.gain.setTargetAtTime(dropoutTarget, t, .028);
         }
 
-        const amount = v.tuningDrift / 100;
+        const driftRange = clamp((v.tuningDrift || 0) / 300, 0, 1);
         const manualTune = (v.tuning || 0) / 100;
-        const tuningLoss = Math.min(1, Math.abs(manualTune));
-        const tuningCurve = Math.pow(tuningLoss, 1.15);
         const signal = v.signal / 100;
         const noise = v.noise / 100;
         const interference = v.interference / 100;
         const bandwidth = v.bandwidth / 300;
         const age = v.speakerAge / 100;
+        const ageDrive = clamp(age, 0, 3);
+
+        if (driftRange <= 0) {
+          autoTuneEnv = 0;
+          autoTuneTarget = 0;
+        } else {
+          if (autoTuneHold <= 0) {
+            autoTuneTarget = (Math.random() * 2 - 1) * driftRange;
+            autoTuneHold = 34 + Math.random() * 86;
+          }
+          autoTuneHold--;
+          autoTuneEnv += (autoTuneTarget - autoTuneEnv) * 0.012;
+          driftPhase += 0.012;
+        }
+
+        const slowAutoTune = autoTuneEnv + Math.sin(driftPhase * lerp(.25, 1.2, driftRange)) * driftRange * .22;
+        const effectiveTune = clamp(manualTune + slowAutoTune, -1, 1);
+        state.visualTune = effectiveTune;
+        updateNeedles();
+        const tuningCurve = Math.pow(Math.abs(effectiveTune), 1.15);
+
         const baseSignalGain = lerp(.05, 1.08, signal) * clamp(1 - tuningCurve * .72, .18, 1);
         const baseNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurve * 4.8) + tuningCurve * .055;
         const baseInterGain = interference * interference * .13 * (1 + tuningCurve * 5.2) + tuningCurve * (.035 + interference * .07);
-        const ageDrive = clamp(age, 0, 3);
         const highBaseRaw = Math.max(420, lerp(650, Math.min(ctx.sampleRate * 0.45, 15500), bandwidth) - ageDrive * 1750);
         const lowBaseRaw = lerp(70, 1200, (1 - bandwidth) * .76 + clamp(ageDrive / 3, 0, 1) * .34);
-        const highBase = clamp(highBaseRaw * (1 + manualTune * .62), 360, Math.min(ctx.sampleRate * 0.45, 16000));
+        const highBase = clamp(highBaseRaw * (1 + effectiveTune * .62), 360, Math.min(ctx.sampleRate * 0.45, 16000));
         const lowBase = clamp(lowBaseRaw * (1 + tuningCurve * 1.25), 40, 1800);
 
-        if (amount <= 0) {
-          driftEnv = 0;
-          driftTarget = 0;
-          n.inputGain.gain.setTargetAtTime(baseSignalGain, t, .12);
-          n.noiseGain.gain.setTargetAtTime(baseNoiseGain, t, .12);
-          n.interGain.gain.setTargetAtTime(baseInterGain, t, .12);
-          n.lp.frequency.setTargetAtTime(highBase, t, .18);
-          n.hp.frequency.setTargetAtTime(lowBase, t, .18);
-        } else {
-          if (driftHold <= 0) {
-            driftTarget = Math.random() < clamp(.08 + amount * .35, 0, .96) ? clamp((.16 + Math.random() * .72) * amount, 0, 2.4) : 0;
-            driftHold = 22 + Math.random() * 52;
-          }
-          driftHold--;
-          driftEnv += (driftTarget - driftEnv) * (driftTarget > driftEnv ? .018 : .011);
-          driftPhase += .016;
-          const driftLfo = (Math.sin(driftPhase * lerp(.35, 1.8, amount)) * .62 + Math.sin(driftPhase * .13) * .38) * driftEnv;
-          const driftLoss = clamp(Math.abs(driftLfo) + driftEnv * .55, 0, 1);
-          const signalDip = clamp(1 - driftLoss * .72, .12, 1);
-          const noiseBoost = 1 + driftLoss * 6.2;
-          const interBoost = 1 + driftLoss * 7.4;
-          n.inputGain.gain.setTargetAtTime(baseSignalGain * signalDip, t, .16);
-          n.noiseGain.gain.setTargetAtTime(baseNoiseGain * noiseBoost + driftLoss * .025, t, .14);
-          n.interGain.gain.setTargetAtTime(baseInterGain * interBoost + driftLoss * interference * .055, t, .12);
-          n.lp.frequency.setTargetAtTime(clamp(highBase * (1 + driftLfo * .62), 420, 14500), t, .2);
-          n.hp.frequency.setTargetAtTime(clamp(lowBase * (1 + driftLoss * 1.25), 40, 1500), t, .2);
-          n.interOsc.frequency.setTargetAtTime(lerp(320, 3000, (Math.sin(driftPhase * 1.7) + 1) * .5) * (.55 + amount), t, .18);
-        }
+        n.inputGain.gain.setTargetAtTime(baseSignalGain, t, .16);
+        n.noiseGain.gain.setTargetAtTime(baseNoiseGain, t, .14);
+        n.interGain.gain.setTargetAtTime(baseInterGain, t, .12);
+        n.lp.frequency.setTargetAtTime(highBase, t, .2);
+        n.hp.frequency.setTargetAtTime(lowBase, t, .2);
+        n.interOsc.frequency.setTargetAtTime(lerp(320, 3000, (effectiveTune + 1) * .5) * (.55 + driftRange), t, .18);
 
         drawScope();
         state.raf = requestAnimationFrame(tick);
@@ -1243,6 +1295,8 @@
       state.nodes = {};
       state.source = null;
       state.playing = false;
+      state.visualTune = (state.values.tuning || 0) / 100;
+      updateNeedles();
       els.play.textContent = 'PLAY';
       els.play.classList.remove('active');
       els.stop.classList.add('active');
@@ -1360,21 +1414,24 @@
           n.dropoutGain.gain.linearRampToValueAtTime(low, t + .018);
           n.dropoutGain.gain.linearRampToValueAtTime(1, t + len);
         }
-        if (drift > 0 && rand() < clamp(.08 + drift * .35, 0, .96)) {
-          const hit = clamp((.16 + rand() * .72) * drift, 0, 2.4);
-          const dir = rand() < .5 ? -1 : 1;
-          const driftLfo = dir * hit;
-          const driftLoss = clamp(Math.abs(driftLfo) + hit * .55, 0, 1);
-          const fadeIn = .25 + hit * .34;
-          const hold = .18 + hit * .42;
-          const fadeOut = .35 + hit * .55;
+        if (drift > 0 && rand() < clamp(.08 + (drift / 3) * .35, 0, .96)) {
+          const driftRange = clamp(drift / 3, 0, 1);
+          const autoTune = (rand() * 2 - 1) * driftRange;
+          const effectiveTune = clamp(manualTune + autoTune, -1, 1);
+          const tuningCurveAuto = Math.pow(Math.abs(effectiveTune), 1.15);
+          const fadeIn = .35 + driftRange * .35;
+          const hold = .25 + driftRange * .45;
+          const fadeOut = .45 + driftRange * .65;
           const back = t + fadeIn + hold;
-          n.inputGain.gain.linearRampToValueAtTime(baseSignalGain * clamp(1 - driftLoss * .72, .12, 1), t + fadeIn);
-          n.noiseGain.gain.linearRampToValueAtTime(baseNoiseGain * (1 + driftLoss * 6.2) + driftLoss * .025, t + fadeIn);
-          n.interGain.gain.linearRampToValueAtTime(baseInterGain * (1 + driftLoss * 7.4) + driftLoss * interference * .055, t + fadeIn);
-          n.lp.frequency.linearRampToValueAtTime(clamp(highBase * (1 + driftLfo * .62), 420, 14500), t + fadeIn);
-          n.hp.frequency.linearRampToValueAtTime(clamp(lowBase * (1 + driftLoss * 1.25), 40, 1500), t + fadeIn);
-          n.interOsc.frequency.linearRampToValueAtTime(lerp(320, 3000, rand()) * (.55 + drift), t + fadeIn);
+          const tunedSignalGain = lerp(.05, 1.08, signal) * clamp(1 - tuningCurveAuto * .72, .12, 1);
+          const tunedNoiseGain = noise * noise * lerp(0.0, .32, 1 - signal + .35) * (1 + tuningCurveAuto * 4.8) + tuningCurveAuto * .055;
+          const tunedInterGain = interference * interference * .13 * (1 + tuningCurveAuto * 5.2) + tuningCurveAuto * (.035 + interference * .07);
+          n.inputGain.gain.linearRampToValueAtTime(tunedSignalGain, t + fadeIn);
+          n.noiseGain.gain.linearRampToValueAtTime(tunedNoiseGain, t + fadeIn);
+          n.interGain.gain.linearRampToValueAtTime(tunedInterGain, t + fadeIn);
+          n.lp.frequency.linearRampToValueAtTime(clamp(highBaseRaw * (1 + effectiveTune * .62), 420, 14500), t + fadeIn);
+          n.hp.frequency.linearRampToValueAtTime(clamp(lowBaseRaw * (1 + tuningCurveAuto * 1.25), 40, 1500), t + fadeIn);
+          n.interOsc.frequency.linearRampToValueAtTime(lerp(320, 3000, (effectiveTune + 1) * .5) * (.55 + driftRange), t + fadeIn);
           n.inputGain.gain.linearRampToValueAtTime(baseSignalGain, back + fadeOut);
           n.noiseGain.gain.linearRampToValueAtTime(baseNoiseGain, back + fadeOut);
           n.interGain.gain.linearRampToValueAtTime(baseInterGain, back + fadeOut);
