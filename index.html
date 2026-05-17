@@ -641,6 +641,92 @@
       gap: 8px;
     }
 
+    .user-presets {
+      margin: 0 16px 16px;
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015) 18%, rgba(0,0,0,.18)),
+        rgba(255,255,255,.018);
+      padding: 12px;
+      border-radius: 16px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 8px 24px rgba(0,0,0,.22);
+    }
+
+    .user-presets-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .user-preset-save {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .user-preset-input {
+      min-width: 0;
+      background: rgba(0,0,0,.42);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 12px 13px;
+      font: inherit;
+      font-weight: 750;
+      border-radius: 12px;
+      outline: none;
+    }
+
+    .user-preset-input::placeholder {
+      color: #8f8370;
+    }
+
+    .user-preset-input:focus {
+      border-color: rgba(255,226,170,.34);
+      box-shadow: inset 0 0 0 1px rgba(255,226,170,.08);
+    }
+
+    .user-preset-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .user-preset-empty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .user-preset-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .user-preset-row .load-user-preset {
+      justify-content: center;
+    }
+
+    .user-preset-row .delete-user-preset {
+      min-width: 100px;
+      color: #fff4ee;
+      background: var(--danger);
+      border: 1px solid rgba(201,95,72,.55);
+    }
+
+    .user-preset-status {
+      min-height: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .footer {
       color: var(--muted);
       text-align: center;
@@ -720,6 +806,11 @@
       body { padding: 10px; }
       .controls { grid-template-columns: 1fr; }
       .meters { grid-template-columns: 1fr 1fr; }
+      .user-preset-save,
+      .user-preset-row { grid-template-columns: 1fr; }
+      .user-preset-row .delete-user-preset,
+      .user-preset-row .load-user-preset,
+      #saveUserPreset { width: 100%; }
       canvas { height: 56px; }
     }
   </style>
@@ -836,11 +927,21 @@
             <button class="secondary preset preset-reset" data-preset="reset">Reset</button>
           </div>
         </div>
+
+        <div class="user-presets">
+          <div class="user-presets-title">User Presets</div>
+          <div class="user-preset-save">
+            <input id="userPresetName" class="user-preset-input" type="text" maxlength="32" placeholder="Preset name" />
+            <button id="saveUserPreset" class="secondary" type="button">Save Preset</button>
+          </div>
+          <div class="user-preset-list" id="userPresetList"></div>
+          <div class="user-preset-status" id="userPresetStatus"></div>
+        </div>
       </section>
     </main>
 
     <div class="footer">
-      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.10</div>
+      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.11</div>
 
       <div class="beta-note">
         Beta version. Render may not perfectly match preview yet. Development is in progress.
@@ -849,6 +950,7 @@
       <div class="devlog">
         <div class="devlog-title">Devlog</div>
         <div class="devlog-list">
+          <div class="devlog-item"><span class="devlog-version">v 0.1.11</span> – Added local user presets with save, load and delete actions.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.10</span> – Added Created Track player with seek bar, time display, download and delete buttons. Created Track playback is connected to the oscilloscope and output meters.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.9</span> – Removed distortion from the Broken Antenna preset.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.8</span> – Improved off-station tuning behavior: near the edges the clean signal can fully disappear while noise and interference remain and intensify.</div>
@@ -952,7 +1054,11 @@
       duration: document.getElementById('duration'),
       sampleRate: document.getElementById('sampleRate'),
       dialNeedle: document.getElementById('dialNeedle'),
-      miniNeedle: document.getElementById('miniNeedle')
+      miniNeedle: document.getElementById('miniNeedle'),
+      userPresetName: document.getElementById('userPresetName'),
+      saveUserPreset: document.getElementById('saveUserPreset'),
+      userPresetList: document.getElementById('userPresetList'),
+      userPresetStatus: document.getElementById('userPresetStatus')
     };
 
     function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
@@ -993,11 +1099,10 @@
       updateNeedles();
     }
 
-    function setPreset(name) {
-      const preset = PRESETS[name];
-      if (!preset) return;
-      Object.entries(preset).forEach(([id, val]) => {
-        state.values[id] = val;
+    function applyValues(values) {
+      Object.entries(values).forEach(([id, val]) => {
+        if (!(id in state.values)) return;
+        state.values[id] = Number(val);
         const slider = document.getElementById(id);
         if (slider) slider.value = val;
         const value = document.getElementById(`${id}Value`);
@@ -1005,6 +1110,100 @@
       });
       updateLiveParams();
       updateNeedles();
+    }
+
+    function setPreset(name) {
+      const preset = PRESETS[name];
+      if (!preset) return;
+      applyValues(preset);
+    }
+
+    const USER_PRESETS_KEY = 'attaqOldRadioUserPresets';
+
+    function getUserPresets() {
+      try {
+        const raw = localStorage.getItem(USER_PRESETS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.warn(err);
+        return [];
+      }
+    }
+
+    function setUserPresets(presets) {
+      localStorage.setItem(USER_PRESETS_KEY, JSON.stringify(presets));
+    }
+
+    function getCurrentPresetValues() {
+      const values = {};
+      PARAMS.forEach(p => values[p.id] = Number(state.values[p.id]));
+      return values;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[char]));
+    }
+
+    function renderUserPresets() {
+      const presets = getUserPresets();
+      if (!els.userPresetList) return;
+
+      if (!presets.length) {
+        els.userPresetList.innerHTML = '<div class="user-preset-empty">No saved presets yet. Adjust the sliders, name your preset and save it.</div>';
+        return;
+      }
+
+      els.userPresetList.innerHTML = presets.map((preset, index) => `
+        <div class="user-preset-row">
+          <button class="secondary load-user-preset" type="button" data-index="${index}">${escapeHtml(preset.name)}</button>
+          <button class="delete-user-preset" type="button" data-index="${index}">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    function saveUserPreset() {
+      const name = (els.userPresetName.value || '').trim();
+      if (!name) {
+        els.userPresetStatus.textContent = 'Preset name is required.';
+        return;
+      }
+
+      const presets = getUserPresets();
+      const existingIndex = presets.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+      const entry = { name, values: getCurrentPresetValues(), updatedAt: Date.now() };
+
+      if (existingIndex >= 0) presets[existingIndex] = entry;
+      else presets.push(entry);
+
+      setUserPresets(presets);
+      els.userPresetName.value = '';
+      els.userPresetStatus.textContent = existingIndex >= 0 ? 'Preset updated.' : 'Preset saved.';
+      renderUserPresets();
+    }
+
+    function loadUserPreset(index) {
+      const presets = getUserPresets();
+      const preset = presets[index];
+      if (!preset) return;
+      applyValues(preset.values || {});
+      els.userPresetStatus.textContent = `Loaded: ${preset.name}`;
+    }
+
+    function deleteUserPreset(index) {
+      const presets = getUserPresets();
+      const preset = presets[index];
+      if (!preset) return;
+      presets.splice(index, 1);
+      setUserPresets(presets);
+      els.userPresetStatus.textContent = `Deleted: ${preset.name}`;
+      renderUserPresets();
     }
 
     function updateNeedles() {
@@ -1872,6 +2071,17 @@
       if (duration > 0) els.createdAudio.currentTime = (Number(els.createdSeek.value) / 1000) * duration;
       updateCreatedPlayerUI();
     });
+    els.saveUserPreset.addEventListener('click', saveUserPreset);
+    els.userPresetName.addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveUserPreset();
+    });
+    els.userPresetList.addEventListener('click', e => {
+      const loadBtn = e.target.closest('.load-user-preset');
+      const deleteBtn = e.target.closest('.delete-user-preset');
+      if (loadBtn) loadUserPreset(Number(loadBtn.dataset.index));
+      if (deleteBtn) deleteUserPreset(Number(deleteBtn.dataset.index));
+    });
+    renderUserPresets();
     document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setPreset(btn.dataset.preset)));
   </script>
 </body>
