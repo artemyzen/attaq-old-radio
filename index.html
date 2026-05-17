@@ -423,13 +423,107 @@
       font-weight: 800;
     }
 
-    .live-record-panel {
+    .live-record-panel,
+    .created-track {
       display: grid;
       gap: 9px;
       border: 1px solid var(--line);
       background: rgba(255,255,255,.018);
       padding: 11px;
       border-radius: 16px;
+    }
+
+    .created-track[hidden] {
+      display: none;
+    }
+
+    .created-track-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .created-track audio {
+      display: none;
+    }
+
+    .custom-player {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid rgba(255,226,170,.18);
+      background:
+        linear-gradient(180deg, rgba(255,226,170,.075), rgba(255,226,170,.018) 18%, rgba(0,0,0,.24) 100%),
+        linear-gradient(135deg, #120d08 0%, #1e160e 38%, #090706 100%);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -1px 0 rgba(0,0,0,.72),
+        inset 0 0 26px rgba(214,169,74,.025);
+    }
+
+    .custom-play {
+      min-width: 82px;
+      padding: 9px 12px;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    .custom-seek {
+      margin: 0;
+    }
+
+    .custom-time {
+      min-width: 92px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .created-track-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .created-track-actions a,
+    .created-track-actions button {
+      display: inline-block;
+      min-width: 170px;
+      text-align: center;
+      color: #090806;
+      background: var(--accent);
+      border: 1px solid rgba(255,226,170,.35);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 6px 14px rgba(0,0,0,.28);
+    }
+
+    .created-track-actions button {
+      min-width: 120px;
+      color: #fff4ee;
+      background: var(--danger);
+      border-color: rgba(201,95,72,.55);
+    }
+
+    .created-track-actions a:hover,
+    .created-track-actions button:hover {
+      filter: brightness(1.08);
     }
 
     .live-record-title {
@@ -665,6 +759,20 @@
           <div class="status" id="status">No file loaded.</div>
           <div class="status" id="downloadArea"></div>
 
+          <div class="created-track" id="createdTrack" hidden>
+            <div class="created-track-title">Created Track</div>
+            <audio id="createdAudio"></audio>
+            <div class="custom-player" id="createdPlayer">
+              <button id="createdPlay" class="custom-play" type="button">Play</button>
+              <input id="createdSeek" class="custom-seek" type="range" min="0" max="1000" value="0" />
+              <div class="custom-time"><span id="createdCurrent">0:00</span><span>/</span><span id="createdTotal">0:00</span></div>
+            </div>
+            <div class="created-track-actions">
+              <a id="createdDownload" href="#" download>Download WAV</a>
+              <button id="deleteCreated" class="secondary" type="button">Delete</button>
+            </div>
+          </div>
+
           <div class="visual-zone">
             <div class="scope-wrap">
               <canvas id="scope" width="1200" height="300"></canvas>
@@ -732,7 +840,7 @@
     </main>
 
     <div class="footer">
-      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.9</div>
+      <div>By Artemy Zen · <a href="https://t.me/archichtotodelajet" target="_blank" rel="noopener">Telegram</a> · v 0.1.10</div>
 
       <div class="beta-note">
         Beta version. Render may not perfectly match preview yet. Development is in progress.
@@ -741,6 +849,7 @@
       <div class="devlog">
         <div class="devlog-title">Devlog</div>
         <div class="devlog-list">
+          <div class="devlog-item"><span class="devlog-version">v 0.1.10</span> – Added Created Track player with seek bar, time display, download and delete buttons. Created Track playback is connected to the oscilloscope and output meters.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.9</span> – Removed distortion from the Broken Antenna preset.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.8</span> – Improved off-station tuning behavior: near the edges the clean signal can fully disappear while noise and interference remain and intensify.</div>
           <div class="devlog-item"><span class="devlog-version">v 0.1.7</span> – Added Tuning Drift Speed and renamed Tuning Drift to Tuning Drift Range.</div>
@@ -796,6 +905,9 @@
       playing: false,
       loop: false,
       raf: null,
+      createdScopeRaf: null,
+      createdAudioSource: null,
+      createdAnalyser: null,
       recording: false,
       recordProcessor: null,
       recordSilentGain: null,
@@ -821,6 +933,15 @@
       liveRecordDownload: document.getElementById('liveRecordDownload'),
       status: document.getElementById('status'),
       downloadArea: document.getElementById('downloadArea'),
+      createdTrack: document.getElementById('createdTrack'),
+      createdAudio: document.getElementById('createdAudio'),
+      createdDownload: document.getElementById('createdDownload'),
+      deleteCreated: document.getElementById('deleteCreated'),
+      createdPlayer: document.getElementById('createdPlayer'),
+      createdPlay: document.getElementById('createdPlay'),
+      createdSeek: document.getElementById('createdSeek'),
+      createdCurrent: document.getElementById('createdCurrent'),
+      createdTotal: document.getElementById('createdTotal'),
       controls: document.getElementById('controls'),
       scope: document.getElementById('scope'),
       recorder: document.getElementById('recorder'),
@@ -896,6 +1017,7 @@
       try {
         stop(false);
         els.downloadArea.innerHTML = '';
+        hideCreatedTrack();
         const ctx = ensureContext();
         els.status.textContent = 'Decoding audio...';
         els.modeText.textContent = 'LOADING';
@@ -1349,6 +1471,11 @@
     function drawScope() {
       const analyser = state.nodes.analyser;
       if (!analyser) return;
+      drawAnalyserScope(analyser);
+    }
+
+    function drawAnalyserScope(analyser) {
+      if (!analyser) return;
       const canvas = els.scope;
       const c = canvas.getContext('2d');
       const w = canvas.width, h = canvas.height;
@@ -1375,6 +1502,92 @@
       const angle = -38 + Math.min(1, rms * 3.2) * 76;
       if (els.needleL) els.needleL.style.transform = `rotate(${angle + (Math.random() - .5) * 4}deg)`;
       if (els.needleR) els.needleR.style.transform = `rotate(${angle + (Math.random() - .5) * 5}deg)`;
+    }
+
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateCreatedPlayerUI() {
+      const audio = els.createdAudio;
+      if (!audio) return;
+      const duration = audio.duration || 0;
+      const current = audio.currentTime || 0;
+      els.createdCurrent.textContent = formatTime(current);
+      els.createdTotal.textContent = formatTime(duration);
+      if (duration > 0 && !els.createdSeek.matches(':active')) {
+        els.createdSeek.value = Math.round((current / duration) * 1000);
+      }
+      els.createdPlay.textContent = audio.paused ? 'Play' : 'Pause';
+    }
+
+    function stopCreatedScope() {
+      if (state.createdScopeRaf) cancelAnimationFrame(state.createdScopeRaf);
+      state.createdScopeRaf = null;
+      if (!state.playing) {
+        if (els.needleL) els.needleL.style.transform = 'rotate(-38deg)';
+        if (els.needleR) els.needleR.style.transform = 'rotate(-38deg)';
+      }
+    }
+
+    async function startCreatedScope() {
+      if (!els.createdAudio?.src) return;
+      const ctx = ensureContext();
+      await ctx.resume();
+      if (state.playing) stop(false);
+
+      if (!state.createdAudioSource) {
+        state.createdAudioSource = ctx.createMediaElementSource(els.createdAudio);
+        state.createdAnalyser = ctx.createAnalyser();
+        state.createdAnalyser.fftSize = 2048;
+        state.createdAudioSource.connect(state.createdAnalyser);
+        state.createdAnalyser.connect(ctx.destination);
+      }
+
+      const tick = () => {
+        if (els.createdAudio.paused || els.createdAudio.ended) {
+          stopCreatedScope();
+          return;
+        }
+        drawAnalyserScope(state.createdAnalyser);
+        state.createdScopeRaf = requestAnimationFrame(tick);
+      };
+      tick();
+    }
+
+    function hideCreatedTrack(message = '') {
+      stopCreatedScope();
+      if (!els.createdTrack) return;
+      if (els.createdAudio?.src) URL.revokeObjectURL(els.createdAudio.src);
+      els.createdTrack.hidden = true;
+      els.createdAudio.pause();
+      els.createdAudio.removeAttribute('src');
+      els.createdAudio.load();
+      els.createdSeek.value = 0;
+      els.createdCurrent.textContent = '0:00';
+      els.createdTotal.textContent = '0:00';
+      els.createdPlay.textContent = 'Play';
+      els.createdDownload.removeAttribute('href');
+      els.createdDownload.removeAttribute('download');
+      if (message) els.downloadArea.textContent = message;
+    }
+
+    function showCreatedTrack(blob, downloadName, label = 'Created track is ready.') {
+      if (els.createdAudio?.src) URL.revokeObjectURL(els.createdAudio.src);
+      const url = URL.createObjectURL(blob);
+      els.createdAudio.src = url;
+      els.createdDownload.href = url;
+      els.createdDownload.download = downloadName;
+      els.createdTrack.hidden = false;
+      els.downloadArea.textContent = label;
+      els.createdSeek.value = 0;
+      els.createdCurrent.textContent = '0:00';
+      els.createdTotal.textContent = '0:00';
+      els.createdPlay.textContent = 'Play';
+      els.createdAudio.addEventListener('loadedmetadata', updateCreatedPlayerUI, { once: true });
     }
 
     async function processOffline(buffer, values, progressCb) {
@@ -1508,22 +1721,20 @@
       if (!state.buffer) return;
       els.render.disabled = true;
       els.downloadArea.innerHTML = '';
-      els.status.textContent = 'Rendering WAV...';
+      hideCreatedTrack();
+      els.status.textContent = 'Creating track...';
       els.modeText.textContent = 'RENDERING';
       try {
         const renderValues = getCurrentValues();
         const rendered = await processOffline(state.buffer, renderValues, p => {
-          els.status.textContent = `Rendering WAV... ${Math.round(p * 100)}%`;
+          els.status.textContent = `Creating track... ${Math.round(p * 100)}%`;
           els.modeText.textContent = `${Math.round(p * 100)}%`;
         });
         const blob = audioBufferToWav(rendered);
-        const url = URL.createObjectURL(blob);
         const cleanName = (state.fileName || 'audio').replace(/\.[^.]+$/, '');
         const downloadName = `${cleanName}_old_radio.wav`;
-        els.downloadArea.innerHTML = `WAV is ready. If the download does not start automatically, click: <a id="manualDownload" href="${url}" download="${downloadName}">Download WAV</a>`;
-        const a = document.getElementById('manualDownload');
-        setTimeout(() => { try { a.click(); } catch(e) {} }, 50);
-        els.status.textContent = 'WAV is ready.';
+        showCreatedTrack(blob, downloadName, 'Created track is ready. Listen below or download WAV.');
+        els.status.textContent = 'Created track is ready.';
         els.modeText.textContent = 'READY';
       } catch (err) {
         console.error(err);
@@ -1592,6 +1803,7 @@
       const cleanName = (state.fileName || 'audio').replace(/\.[^.]+$/, '');
       const downloadName = `${cleanName}_live_old_radio.wav`;
       els.liveRecordDownload.innerHTML = `Live WAV recording is ready: <a href="${url}" download="${downloadName}">Download Live WAV</a>`;
+      showCreatedTrack(blob, downloadName, 'Live WAV recording is ready. Listen below or download WAV.');
       els.liveRecordStatus.textContent = 'Live WAV recording finished.';
       els.liveRecordPanel.classList.remove('recording');
       els.recordLive.disabled = false;
@@ -1635,6 +1847,31 @@
     els.render.addEventListener('click', renderWav);
     els.recordLive.addEventListener('click', startLiveRecording);
     els.stopRecord.addEventListener('click', () => stopLiveRecording(false));
+    els.deleteCreated.addEventListener('click', () => hideCreatedTrack('Deleted.'));
+    els.createdAudio.addEventListener('play', () => {
+      updateCreatedPlayerUI();
+      startCreatedScope();
+    });
+    els.createdAudio.addEventListener('pause', () => {
+      updateCreatedPlayerUI();
+      stopCreatedScope();
+    });
+    els.createdAudio.addEventListener('ended', () => {
+      updateCreatedPlayerUI();
+      stopCreatedScope();
+    });
+    els.createdAudio.addEventListener('timeupdate', updateCreatedPlayerUI);
+    els.createdAudio.addEventListener('loadedmetadata', updateCreatedPlayerUI);
+    els.createdPlay.addEventListener('click', async () => {
+      if (!els.createdAudio.src) return;
+      if (els.createdAudio.paused) await els.createdAudio.play();
+      else els.createdAudio.pause();
+    });
+    els.createdSeek.addEventListener('input', () => {
+      const duration = els.createdAudio.duration || 0;
+      if (duration > 0) els.createdAudio.currentTime = (Number(els.createdSeek.value) / 1000) * duration;
+      updateCreatedPlayerUI();
+    });
     document.querySelectorAll('.preset').forEach(btn => btn.addEventListener('click', () => setPreset(btn.dataset.preset)));
   </script>
 </body>
