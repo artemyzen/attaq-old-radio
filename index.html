@@ -860,11 +860,42 @@
 
     .footer-links {
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
-      gap: 12px;
+      align-items: center;
+      gap: 14px;
       font-size: 12px;
       line-height: 1.35;
+    }
+
+    .footer-links a {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01) 25%, rgba(0,0,0,.18)),
+        rgba(0,0,0,.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 4px 10px rgba(0,0,0,.24);
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease, color .12s ease;
+    }
+
+    .footer-links a:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+      color: var(--accent);
+      border-color: rgba(221,179,96,.48);
+    }
+
+    .footer-links svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      fill: currentColor;
     }
 
     .support-block {
@@ -977,7 +1008,7 @@
 
     .hub-name::before,
     .hub-name::after {
-      content: "ARTEMY ZEN";
+      content: attr(data-label);
       position: absolute;
       inset: 0;
       pointer-events: none;
@@ -1281,16 +1312,23 @@
       </div>
 
       <div class="footer-links">
-        <a href="https://discord.gg/W7pUZDcqs7" target="_blank" rel="noopener">Discord</a>
-        <a href="https://www.linkedin.com/company/attaq-lab" target="_blank" rel="noopener">LinkedIn</a>
-        <a href="https://artemyzen.github.io/attaq-lab/" target="_blank" rel="noopener">ATTAQ Lab</a>
+        <a href="https://discord.gg/W7pUZDcqs7" target="_blank" rel="noopener" aria-label="Discord" title="Discord">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.317 4.369A19.791 19.791 0 0 0 15.885 3c-.191.345-.404.808-.554 1.173a18.27 18.27 0 0 0-5.487 0A12.64 12.64 0 0 0 9.29 3a19.736 19.736 0 0 0-4.433 1.369C2.05 8.58 1.289 12.687 1.66 16.737a19.9 19.9 0 0 0 5.394 2.723c.437-.599.826-1.233 1.165-1.892a12.995 12.995 0 0 1-1.835-.88c.154-.113.305-.23.452-.35 3.54 1.66 7.38 1.66 10.878 0 .148.12.299.237.453.35-.586.34-1.2.634-1.836.88.34.659.729 1.293 1.165 1.892a19.88 19.88 0 0 0 5.395-2.723c.436-4.698-.746-8.768-3.575-12.368ZM9.955 14.604c-1.061 0-1.934-.974-1.934-2.17 0-1.196.853-2.17 1.934-2.17 1.09 0 1.953.983 1.934 2.17 0 1.196-.853 2.17-1.934 2.17Zm4.09 0c-1.061 0-1.934-.974-1.934-2.17 0-1.196.853-2.17 1.934-2.17 1.09 0 1.953.983 1.934 2.17 0 1.196-.844 2.17-1.934 2.17Z"/>
+          </svg>
+        </a>
+
+        <a href="https://www.linkedin.com/company/attaq-lab" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6.94 8.5H3.56V20h3.38V8.5ZM5.25 3A1.97 1.97 0 1 0 5.3 6.94 1.97 1.97 0 0 0 5.25 3ZM20.44 12.56c0-3.43-1.83-5.02-4.28-5.02-1.97 0-2.85 1.08-3.34 1.84V8.5H9.44c.04.58 0 11.5 0 11.5h3.38v-6.42c0-.34.02-.68.13-.92.27-.68.89-1.39 1.93-1.39 1.36 0 1.9 1.04 1.9 2.57V20h3.38v-7.44Z"/>
+          </svg>
+        </a>
       </div>
 
       <div class="support-block">
-        <div class="support-title">Support / Follow</div>
         <div class="support-buttons">
-          <a class="support-button hub" href="https://artemyzen.github.io/artemyzen/" target="_blank" rel="noopener">
-            <span class="hub-name">ARTEMY ZEN</span>
+          <a class="support-button hub" href="https://artemyzen.github.io/attaq-lab/" target="_blank" rel="noopener">
+            <span class="hub-name" data-label="ATTAQ LAB">ATTAQ LAB</span>
           </a>
 
           <a class="support-button itch" href="https://artemyzen.itch.io/attaq-old-radio" target="_blank" rel="noopener">
@@ -1301,7 +1339,7 @@
             </span>
             <span class="support-button-copy">
               <span class="support-button-main">SUPPORT ME ON ITCH.IO</span>
-              <span class="support-button-text">This tool is free online. If it helped your project, you can support me on itch.io. The paid version includes the same tool as an offline HTML file.</span>
+              <span class="support-button-text">This tool is free online. If it helped your project, you can support me on itch.io. The paid version includes the same tool as a downloadable offline version.</span>
             </span>
           </a>
         </div>
